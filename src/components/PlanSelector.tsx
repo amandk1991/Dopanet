@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import {
   Dialog,
@@ -144,7 +145,7 @@ const PlanSelector: React.FC<PlanSelectorProps> = ({ isOpen, setIsOpen, onSelect
                 "border rounded-lg p-4 cursor-pointer transition-all hover:scale-105",
                 tierColors[tier]
               )}
-              onClick={() => onSelectPlan(plan)}
+              onClick={() => handlePlanSelection(plan)}
             >
               <div className={cn("font-bold text-xl mb-2", tierTextColors[tier])}>
                 ₹{plan.price.toLocaleString()}
@@ -159,7 +160,7 @@ const PlanSelector: React.FC<PlanSelectorProps> = ({ isOpen, setIsOpen, onSelect
                   <span className="font-semibold">{plan.reachPerDay.toLocaleString()}</span>
                 </div>
                 <div className="flex justify-between text-sm text-gray-500 dark:text-gray-400">
-                  <span>Duration:</span>
+                  <span>Min Duration:</span>
                   <span>{selectedTab === "banner" ? "5 seconds" : "10 seconds"}</span>
                 </div>
                 <div className="flex justify-between text-sm text-gray-500 dark:text-gray-400">
@@ -178,6 +179,17 @@ const PlanSelector: React.FC<PlanSelectorProps> = ({ isOpen, setIsOpen, onSelect
     setSelectedTab(value as "banner" | "video");
   };
 
+  // Modified to handle plan selection properly
+  const handlePlanSelection = (plan: Plan) => {
+    // Create a modified plan that includes the correct ad type
+    const modifiedPlan = {
+      ...plan,
+      adType: selectedTab // Ensure the plan knows which ad type it belongs to
+    };
+    onSelectPlan(modifiedPlan);
+    setIsOpen(false);
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
@@ -194,13 +206,13 @@ const PlanSelector: React.FC<PlanSelectorProps> = ({ isOpen, setIsOpen, onSelect
           className="w-full"
         >
           <TabsList className="grid grid-cols-2 w-full max-w-md mx-auto mb-6">
-            <TabsTrigger value="banner">Banner Ads (5s)</TabsTrigger>
-            <TabsTrigger value="video">Video Ads (10s)</TabsTrigger>
+            <TabsTrigger value="banner">Banner Ads (Min 5s)</TabsTrigger>
+            <TabsTrigger value="video">Video Ads (Min 10s)</TabsTrigger>
           </TabsList>
 
           <TabsContent value="banner" className="space-y-6">
             <div className="text-center text-lg font-medium mb-2">
-              Banner Ad Plans - ₹50 CPM
+              Banner Ad Plans - Starting at ₹50 CPM
             </div>
             {renderPlans(bannerPlans.basic, "basic")}
             {renderPlans(bannerPlans.silver, "silver")}
@@ -210,7 +222,7 @@ const PlanSelector: React.FC<PlanSelectorProps> = ({ isOpen, setIsOpen, onSelect
 
           <TabsContent value="video" className="space-y-6">
             <div className="text-center text-lg font-medium mb-2">
-              Video Ad Plans - ₹100 CPM
+              Video Ad Plans - Starting at ₹100 CPM
             </div>
             {renderPlans(videoPlans.basic, "basic")}
             {renderPlans(videoPlans.silver, "silver")}

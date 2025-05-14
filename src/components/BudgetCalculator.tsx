@@ -1,5 +1,4 @@
-
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -16,12 +15,13 @@ import { Slider } from "@/components/ui/slider";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Calculator, Download, FileText } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Form, FormField, FormItem, FormLabel, FormControl } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
-import PlanSelector, { Plan } from "./PlanSelector";
+import PlanSelectorButtons from "./PlanSelectorButtons";
+import TimeSlotSelector from "./TimeSlotSelector";
+import OfferPopup from "./OfferPopup";
+import { Plan } from "./PlanSelector";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import emailjs from "@emailjs/browser";
 import { PDFDocument, rgb, StandardFonts } from "pdf-lib";
@@ -41,8 +41,8 @@ interface CampaignFormData {
 
 const BudgetCalculator: React.FC<BudgetCalculatorProps> = ({ isOpen, setIsOpen }) => {
   const { toast } = useToast();
-  const [planSelectorOpen, setPlanSelectorOpen] = useState(false);
   const [campaignFormOpen, setCampaignFormOpen] = useState(false);
+  const [offerPopupOpen, setOfferPopupOpen] = useState(false);
   
   const form = useForm<CampaignFormData>({
     defaultValues: {
@@ -67,12 +67,15 @@ const BudgetCalculator: React.FC<BudgetCalculatorProps> = ({ isOpen, setIsOpen }
     budget: 5000, // in INR
     hitsPerPerson: 3,
     days: 30, // campaign duration in days (default to 30 for plans)
-    hitsPerPersonPerDay: 1
+    hitsPerPersonPerDay: 1,
+    repeatMonths: 1, // Added for campaign repetition
+    timeSlots: [] as string[] // Added for time slots
   });
 
   // New plan-related state
   const [selectedPlan, setSelectedPlan] = useState<Plan | null>(null);
   const [isCustomPlan, setIsCustomPlan] = useState(true);
+  const [selectedPlanCategory, setSelectedPlanCategory] = useState<string | null>(null);
   
   // Calculated values
   const [calculatedValues, setCalculatedValues] = useState({
@@ -82,7 +85,9 @@ const BudgetCalculator: React.FC<BudgetCalculatorProps> = ({ isOpen, setIsOpen }
     totalImpressions: 0,
     totalReach: 0,
     impressionsPerDay: 0,
-    reachPerDay: 0
+    reachPerDay: 0,
+    freeMonths: 0, // New for free months
+    totalMonths: 0 // Total including free months
   });
   
   // Form submission loading state
@@ -128,11 +133,36 @@ const BudgetCalculator: React.FC<BudgetCalculatorProps> = ({ isOpen, setIsOpen }
   const calculateCPM = () => {
     // If a plan is selected, use fixed CPM based on ad type
     if (selectedPlan && !isCustomPlan) {
-      return formData.adType === "banner" ? 50 : 100;
+      // Base CPM by ad type
+      let baseCPM = formData.adType === "banner" ? 50 : 100;
+      
+      // Adjust CPM by duration
+      baseCPM = formData.duration * 10;
+      
+      // Additional CPM for targeting options
+      // Gender targeting (excluding "All")
+      if (formData.gender !== "all") {
+        baseCPM += formData.adType === "banner" ? 15 : 30;
+      }
+      
+      // Age targeting (excluding "All")
+      if (formData.ageGroup !== "all") {
+        baseCPM += formData.adType === "banner" ? 15 : 30;
+      }
+      
+      // City targeting
+      const cityIncrement = formData.adType === "banner" ? 15 : 30;
+      const citiesAdded = formData.cities.length > 0 ? formData.cities.length - 1 : 0;
+      baseCPM += citiesAdded * cityIncrement;
+      
+      // Premises targeting
+      baseCPM += formData.premises.length * (formData.adType === "banner" ? 15 : 30);
+      
+      return baseCPM;
     }
     
     // Base CPM calculation
-    let baseCPM = formData.adType === "banner" ? 50 : 100;
+    let baseCPM = formData.duration * 10;
     
     // Extra cost for each city
     const cityIncrement = formData.adType === "banner" ? 15 : 30;
@@ -191,24 +221,29 @@ const BudgetCalculator: React.FC<BudgetCalculatorProps> = ({ isOpen, setIsOpen }
   const calculateReachPerDay = (totalReach: number) => {
     return Math.round(totalReach / formData.days);
   };
+  
+  // Calculate free months based on repeat duration
+  const calculateFreeMonths = (repeatMonths: number) => {
+    if (repeatMonths >= 12) return 12; // 12 months free for 12-month subscription
+    if (repeatMonths >= 6) return 3;  // 3 months free for 6-month subscription
+    if (repeatMonths >= 3) return 2;  // 2 months free for 3-month subscription
+    return 0; // No free months for shorter durations
+  };
 
   // Handle plan selection
   const handlePlanSelection = (plan: Plan) => {
     setSelectedPlan(plan);
     setIsCustomPlan(false);
+    setSelectedPlanCategory(plan.tier);
     
     // Update form data based on plan
     setFormData(prev => ({
       ...prev,
-      adType: plan.tier === "basic" || plan.tier === "silver" || plan.tier === "gold" || plan.tier === "platinum" 
-        ? (prev.adType) 
-        : prev.adType,
+      adType: prev.adType, // Keep the current ad type
       duration: prev.adType === "banner" ? 5 : 10, // Set duration based on ad type
       budget: plan.price,
       days: 30 // Plans are 30-day packages
     }));
-    
-    setPlanSelectorOpen(false);
     
     toast({
       title: `${plan.label} Plan Selected`,
@@ -221,7 +256,7 @@ const BudgetCalculator: React.FC<BudgetCalculatorProps> = ({ isOpen, setIsOpen }
     // Ensure minimum duration based on ad type
     const minDuration = formData.adType === "banner" ? 5 : 10;
     
-    if (formData.duration !== minDuration) {
+    if (formData.duration < minDuration) {
       setFormData(prev => ({ ...prev, duration: minDuration }));
       return;
     }
@@ -242,6 +277,8 @@ const BudgetCalculator: React.FC<BudgetCalculatorProps> = ({ isOpen, setIsOpen }
     const totalReach = baseReach + bonusReach;
     const impressionsPerDay = calculateImpressionsPerDay(impressions);
     const reachPerDay = calculateReachPerDay(totalReach);
+    const freeMonths = calculateFreeMonths(formData.repeatMonths);
+    const totalMonths = formData.repeatMonths + freeMonths;
     
     setCalculatedValues({
       cpm,
@@ -250,7 +287,9 @@ const BudgetCalculator: React.FC<BudgetCalculatorProps> = ({ isOpen, setIsOpen }
       totalImpressions: impressions,
       totalReach,
       impressionsPerDay,
-      reachPerDay
+      reachPerDay,
+      freeMonths,
+      totalMonths
     });
   }, [formData, selectedPlan, isCustomPlan]);
   
@@ -262,6 +301,11 @@ const BudgetCalculator: React.FC<BudgetCalculatorProps> = ({ isOpen, setIsOpen }
   };
   
   const handleInputChange = (name: string, value: any) => {
+    // Special handling for days to enforce max 30 days
+    if (name === 'days') {
+      value = Math.min(30, Math.max(1, value));
+    }
+    
     setFormData(prev => ({ ...prev, [name]: value }));
   };
   
@@ -281,6 +325,17 @@ const BudgetCalculator: React.FC<BudgetCalculatorProps> = ({ isOpen, setIsOpen }
         return { ...prev, premises: prev.premises.filter(p => p !== premise) };
       } else {
         return { ...prev, premises: [...prev.premises, premise] };
+      }
+    });
+  };
+
+  // Handle time slot selection
+  const handleTimeSlotToggle = (timeSlot: string) => {
+    setFormData(prev => {
+      if (prev.timeSlots.includes(timeSlot)) {
+        return { ...prev, timeSlots: prev.timeSlots.filter(t => t !== timeSlot) };
+      } else {
+        return { ...prev, timeSlots: [...prev.timeSlots, timeSlot] };
       }
     });
   };
@@ -309,7 +364,9 @@ const BudgetCalculator: React.FC<BudgetCalculatorProps> = ({ isOpen, setIsOpen }
         cpm: calculatedValues.cpm,
         impressions: calculatedValues.totalImpressions,
         reach: calculatedValues.totalReach,
-        plan_type: isCustomPlan ? "Custom Plan" : selectedPlan?.tier
+        plan_type: isCustomPlan ? "Custom Plan" : selectedPlan?.tier,
+        repeat_months: formData.repeatMonths,
+        free_months: calculatedValues.freeMonths
       };
       
       // Will be implemented when service ID and template ID are provided
@@ -415,7 +472,17 @@ const BudgetCalculator: React.FC<BudgetCalculatorProps> = ({ isOpen, setIsOpen }
         addLine('Premises', formData.premises.join(', '));
       }
       
+      if (formData.timeSlots.length > 0) {
+        addLine('Time Slots', formData.timeSlots.join(', '));
+      }
+
+      addLine('Campaign Duration', `${formData.days} days`);
       addLine('Plan Type', isCustomPlan ? 'Custom Plan' : `${selectedPlan?.label} Plan`);
+      
+      if (formData.repeatMonths > 1) {
+        addLine('Subscription Length', `${formData.repeatMonths} months + ${calculatedValues.freeMonths} free months`);
+        addLine('Total Duration', `${calculatedValues.totalMonths} months`);
+      }
       
       y -= lineHeight;
       
@@ -429,9 +496,14 @@ const BudgetCalculator: React.FC<BudgetCalculatorProps> = ({ isOpen, setIsOpen }
       y -= lineHeight * 1.5;
       
       addLine('Budget', `₹${formData.budget.toLocaleString()}`);
-      addLine('Campaign Duration', `${formData.days} days`);
       addLine('Daily Budget', `₹${Math.round(formData.budget/formData.days).toLocaleString()}`);
       addLine('CPM', `₹${calculatedValues.cpm}`);
+      
+      if (formData.repeatMonths > 1) {
+        addLine('Total Investment', `₹${(formData.budget * formData.repeatMonths).toLocaleString()}`);
+        addLine('Value with Free Months', `₹${(formData.budget * calculatedValues.totalMonths).toLocaleString()}`);
+        addLine('Savings', `₹${(formData.budget * calculatedValues.freeMonths).toLocaleString()}`);
+      }
       
       y -= lineHeight;
       
@@ -455,6 +527,11 @@ const BudgetCalculator: React.FC<BudgetCalculatorProps> = ({ isOpen, setIsOpen }
       addLine('Total Reach', calculatedValues.totalReach.toLocaleString());
       addLine('Daily Reach', calculatedValues.reachPerDay.toLocaleString());
       
+      if (formData.repeatMonths > 1) {
+        addLine('Total Campaign Impressions', (calculatedValues.totalImpressions * calculatedValues.totalMonths).toLocaleString());
+        addLine('Total Campaign Reach', (calculatedValues.totalReach * calculatedValues.totalMonths).toLocaleString());
+      }
+      
       y -= lineHeight * 2;
       
       // Add footer
@@ -474,7 +551,11 @@ const BudgetCalculator: React.FC<BudgetCalculatorProps> = ({ isOpen, setIsOpen }
       const link = document.createElement('a');
       link.href = URL.createObjectURL(blob);
       link.download = `Dopanet_Ad_Quote_${new Date().toISOString().slice(0,10)}.pdf`;
+      
+      // Append to document, click, and remove
+      document.body.appendChild(link);
       link.click();
+      document.body.removeChild(link);
       
       toast({
         title: "Quote Downloaded",
@@ -516,27 +597,26 @@ const BudgetCalculator: React.FC<BudgetCalculatorProps> = ({ isOpen, setIsOpen }
   return (
     <>
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
-        <DialogContent className="max-w-6xl w-[95vw] h-[90vh] overflow-hidden flex flex-col">
+        <DialogContent className="max-w-7xl w-[95vw] h-[95vh] overflow-hidden flex flex-col">
           <DialogHeader className="flex-shrink-0">
             <div className="flex justify-between items-center">
               <DialogTitle className="text-2xl font-bold">Budget Calculator</DialogTitle>
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button 
-                      onClick={() => setPlanSelectorOpen(true)}
-                      variant="outline"
-                      className="flex items-center gap-2"
-                    >
-                      <Calculator size={18} />
-                      <span>Browse Plans</span>
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>Explore Ad Packages with Bonus Reach</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
+              <div className="flex gap-2">
+                <Button 
+                  onClick={() => setOfferPopupOpen(true)}
+                  variant="outline"
+                  className="flex items-center gap-2"
+                >
+                  <Badge className="bg-green-500">New</Badge>
+                  <span>More Exciting Offers</span>
+                </Button>
+                <PlanSelectorButtons 
+                  onPlanSelect={handlePlanSelection} 
+                  currentAdType={formData.adType}
+                  selectedCategory={selectedPlanCategory}
+                  setSelectedCategory={setSelectedPlanCategory}
+                />
+              </div>
             </div>
             <DialogDescription className="text-center">
               Plan your campaign and see estimated results in real-time
@@ -544,7 +624,7 @@ const BudgetCalculator: React.FC<BudgetCalculatorProps> = ({ isOpen, setIsOpen }
           </DialogHeader>
           
           {/* Global metrics bar - visible across all tabs */}
-          <div className="bg-gray-50 dark:bg-gray-800 p-3 my-2 rounded-lg grid grid-cols-2 md:grid-cols-5 gap-2 text-sm">
+          <div className="bg-gray-50 dark:bg-gray-800 p-3 my-2 rounded-lg grid grid-cols-2 md:grid-cols-5 gap-2 text-sm sticky top-0 z-10">
             <div className="p-2 bg-white dark:bg-gray-900 rounded-md shadow-sm">
               <div className="font-semibold text-dopanet-600 dark:text-dopanet-400">CPM</div>
               <div className="text-lg font-bold">₹{calculatedValues.cpm}</div>
@@ -571,12 +651,13 @@ const BudgetCalculator: React.FC<BudgetCalculatorProps> = ({ isOpen, setIsOpen }
             {/* Main Content - Scrollable Tabs */}
             <div className="flex-grow overflow-y-auto pr-0 md:pr-4">
               <Tabs defaultValue="adType" className="w-full">
-                <TabsList className="grid grid-cols-6 mb-4">
+                <TabsList className="grid grid-cols-7 mb-4">
                   <TabsTrigger value="adType">Ad Type</TabsTrigger>
                   <TabsTrigger value="duration">Duration</TabsTrigger>
                   <TabsTrigger value="industry">Industry</TabsTrigger>
                   <TabsTrigger value="geography">Location</TabsTrigger>
                   <TabsTrigger value="targeting">Targeting</TabsTrigger>
+                  <TabsTrigger value="timeSlots">Time Slots</TabsTrigger>
                   <TabsTrigger value="summary">Summary</TabsTrigger>
                 </TabsList>
                 
@@ -606,7 +687,7 @@ const BudgetCalculator: React.FC<BudgetCalculatorProps> = ({ isOpen, setIsOpen }
                             </div>
                           </div>
                           <span className="mt-2 text-sm text-dopanet-500">
-                            Duration: 5 seconds
+                            Min Duration: 5 seconds
                           </span>
                         </Label>
                       </div>
@@ -628,7 +709,7 @@ const BudgetCalculator: React.FC<BudgetCalculatorProps> = ({ isOpen, setIsOpen }
                             </div>
                           </div>
                           <span className="mt-2 text-sm text-dopanet-500">
-                            Duration: 10 seconds
+                            Min Duration: 10 seconds
                           </span>
                         </Label>
                       </div>
@@ -642,22 +723,35 @@ const BudgetCalculator: React.FC<BudgetCalculatorProps> = ({ isOpen, setIsOpen }
                     <h3 className="text-lg font-medium">Ad Duration</h3>
                     <p className="text-sm text-gray-500 dark:text-gray-400">
                       {formData.adType === "banner" 
-                        ? "Banner ads have a fixed duration of 5 seconds" 
-                        : "Video ads have a fixed duration of 10 seconds"
+                        ? "Banner ads require a minimum duration of 5 seconds" 
+                        : "Video ads require a minimum duration of 10 seconds"
                       }
                     </p>
                     
                     <div className="space-y-6">
                       <div>
                         <div className="flex justify-between items-center mb-2">
-                          <Label htmlFor="duration">Duration</Label>
+                          <Label htmlFor="duration">Duration in seconds</Label>
                           <span className="text-sm font-medium">{formData.duration}s</span>
                         </div>
+                        <div className="py-5">
+                          <Slider
+                            id="duration-slider"
+                            min={formData.adType === "banner" ? 5 : 10}
+                            max={formData.adType === "banner" ? 30 : 60}
+                            step={1}
+                            value={[formData.duration]}
+                            onValueChange={(values) => handleInputChange("duration", values[0])}
+                          />
+                        </div>
                         <Input
-                          type="text"
-                          value={`${formData.duration} seconds (fixed)`}
-                          readOnly
-                          className="bg-gray-100 dark:bg-gray-800"
+                          id="duration"
+                          type="number"
+                          min={formData.adType === "banner" ? 5 : 10}
+                          max={formData.adType === "banner" ? 30 : 60}
+                          value={formData.duration}
+                          onChange={(e) => handleInputChange("duration", parseInt(e.target.value) || (formData.adType === "banner" ? 5 : 10))}
+                          className="mt-2"
                         />
                       </div>
                       
@@ -666,15 +760,15 @@ const BudgetCalculator: React.FC<BudgetCalculatorProps> = ({ isOpen, setIsOpen }
                         <div className="text-sm text-gray-600 dark:text-gray-300 space-y-2">
                           <div className="flex items-center space-x-2">
                             <div className="h-2 w-2 bg-green-500 rounded-full"></div>
-                            <p>Fixed duration ensures consistent user experience</p>
+                            <p>Longer duration increases viewer awareness</p>
                           </div>
                           <div className="flex items-center space-x-2">
                             <div className="h-2 w-2 bg-yellow-500 rounded-full"></div>
-                            <p>{formData.adType === "banner" ? "Banner ads (5s)" : "Video ads (10s)"} are optimized for engagement</p>
+                            <p>Each second affects CPM by ₹10</p>
                           </div>
                           <div className="flex items-center space-x-2">
                             <div className="h-2 w-2 bg-dopanet-500 rounded-full"></div>
-                            <p>CPM is calculated based on ad type and targeting options</p>
+                            <p>Balance duration with budget for optimal reach</p>
                           </div>
                         </div>
                       </div>
@@ -959,6 +1053,21 @@ const BudgetCalculator: React.FC<BudgetCalculatorProps> = ({ isOpen, setIsOpen }
                   </div>
                 </TabsContent>
                 
+                {/* Time Slots Section - New */}
+                <TabsContent value="timeSlots" className="space-y-6">
+                  <div className="space-y-4">
+                    <h3 className="text-lg font-medium">Select Time Slots</h3>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                      Choose specific time slots during the day when your ads will be shown (optional)
+                    </p>
+                    
+                    <TimeSlotSelector 
+                      selectedTimeSlots={formData.timeSlots}
+                      onTimeSlotToggle={handleTimeSlotToggle}
+                    />
+                  </div>
+                </TabsContent>
+                
                 {/* Summary Section */}
                 <TabsContent value="summary" className="space-y-6">
                   <div className="space-y-6">
@@ -1025,6 +1134,15 @@ const BudgetCalculator: React.FC<BudgetCalculatorProps> = ({ isOpen, setIsOpen }
                             </p>
                           </div>
                         </div>
+
+                        <div className="bg-gray-50 dark:bg-gray-900/50 p-3 rounded">
+                          <p className="text-sm text-gray-500 dark:text-gray-400">Time Slots</p>
+                          <p className="font-medium">
+                            {formData.timeSlots.length > 0 
+                              ? formData.timeSlots.join(", ")
+                              : "All day (no specific time slots)"}
+                          </p>
+                        </div>
                         
                         <div className="bg-gray-50 dark:bg-gray-900/50 p-3 rounded">
                           <p className="text-sm text-gray-500 dark:text-gray-400">Budget & Duration</p>
@@ -1032,6 +1150,20 @@ const BudgetCalculator: React.FC<BudgetCalculatorProps> = ({ isOpen, setIsOpen }
                             ₹{formData.budget.toLocaleString()} over {formData.days} days (₹{Math.round(formData.budget/formData.days).toLocaleString()}/day)
                           </p>
                         </div>
+                        
+                        {formData.repeatMonths > 1 && (
+                          <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800/50 p-3 rounded">
+                            <p className="text-sm text-gray-600 dark:text-gray-300">Campaign Repetition</p>
+                            <div className="font-medium flex justify-between items-center">
+                              <span>
+                                {formData.repeatMonths} months paid + {calculatedValues.freeMonths} months free
+                              </span>
+                              <Badge className="bg-green-500 text-white">
+                                {calculatedValues.freeMonths > 0 ? `${calculatedValues.freeMonths} FREE MONTHS!` : ""}
+                              </Badge>
+                            </div>
+                          </div>
+                        )}
                       </div>
                     </div>
                     
@@ -1046,6 +1178,11 @@ const BudgetCalculator: React.FC<BudgetCalculatorProps> = ({ isOpen, setIsOpen }
                           <p className="text-2xl font-bold text-dopanet-600 dark:text-dopanet-400">
                             {calculatedValues.totalImpressions.toLocaleString()}
                           </p>
+                          {formData.repeatMonths > 1 && (
+                            <p className="text-xs text-gray-500 mt-1">
+                              Total over {calculatedValues.totalMonths} months: {(calculatedValues.totalImpressions * calculatedValues.totalMonths).toLocaleString()}
+                            </p>
+                          )}
                         </div>
                         
                         <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm">
@@ -1065,6 +1202,11 @@ const BudgetCalculator: React.FC<BudgetCalculatorProps> = ({ isOpen, setIsOpen }
                               <span>Base: {calculatedValues.baseReach.toLocaleString()}</span>
                               <span>Bonus: +{calculatedValues.bonusReach.toLocaleString()}</span>
                             </div>
+                          )}
+                          {formData.repeatMonths > 1 && (
+                            <p className="text-xs text-gray-500 mt-1">
+                              Total over {calculatedValues.totalMonths} months: {(calculatedValues.totalReach * calculatedValues.totalMonths).toLocaleString()}
+                            </p>
                           )}
                         </div>
                         
@@ -1130,7 +1272,7 @@ const BudgetCalculator: React.FC<BudgetCalculatorProps> = ({ isOpen, setIsOpen }
             </div>
             
             {/* Sticky panel with results */}
-            <div className="w-full md:w-72 flex-shrink-0 border-t md:border-t-0 md:border-l border-gray-200 dark:border-gray-700 mt-4 md:mt-0 pt-4 md:pt-0 md:pl-4">
+            <div className="w-full md:w-80 flex-shrink-0 border-t md:border-t-0 md:border-l border-gray-200 dark:border-gray-700 mt-4 md:mt-0 pt-4 md:pt-0 md:pl-4">
               <ScrollArea className="h-full pr-4">
                 <div className="sticky top-0">
                   <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
@@ -1168,14 +1310,14 @@ const BudgetCalculator: React.FC<BudgetCalculatorProps> = ({ isOpen, setIsOpen }
                       </div>
                       
                       <div>
-                        <Label htmlFor="days" className="text-sm">Campaign Days</Label>
+                        <Label htmlFor="days" className="text-sm">Campaign Days (max 30)</Label>
                         <Input
                           id="days"
                           type="number"
                           value={formData.days}
                           onChange={(e) => handleInputChange("days", parseInt(e.target.value) || 1)}
                           min={1}
-                          max={90}
+                          max={30}
                         />
                       </div>
                       
@@ -1200,6 +1342,31 @@ const BudgetCalculator: React.FC<BudgetCalculatorProps> = ({ isOpen, setIsOpen }
                           onChange={(e) => handleInputChange("hitsPerPersonPerDay", parseInt(e.target.value) || 1)}
                           min={1}
                           max={10}
+                        />
+                      </div>
+                      
+                      <div>
+                        <Label htmlFor="repeat-months" className="text-sm">Repeat Campaign (months)</Label>
+                        <div className="flex items-center gap-2 mb-1">
+                          <Input
+                            id="repeat-months"
+                            type="number"
+                            value={formData.repeatMonths}
+                            onChange={(e) => handleInputChange("repeatMonths", parseInt(e.target.value) || 1)}
+                            min={1}
+                            max={12}
+                          />
+                          {calculatedValues.freeMonths > 0 && (
+                            <Badge className="bg-green-500 text-white whitespace-nowrap">+{calculatedValues.freeMonths} FREE</Badge>
+                          )}
+                        </div>
+                        <Slider
+                          id="repeat-months-slider"
+                          min={1}
+                          max={12}
+                          step={1}
+                          value={[formData.repeatMonths]}
+                          onValueChange={(values) => handleInputChange("repeatMonths", values[0])}
                         />
                       </div>
                       
@@ -1244,6 +1411,25 @@ const BudgetCalculator: React.FC<BudgetCalculatorProps> = ({ isOpen, setIsOpen }
                           <span>Daily Reach:</span>
                           <span className="font-semibold">{calculatedValues.reachPerDay.toLocaleString()}</span>
                         </div>
+                        
+                        {formData.repeatMonths > 1 && (
+                          <>
+                            <div className="pt-2 border-t border-gray-200 dark:border-gray-700 mt-2">
+                              <div className="flex justify-between text-sm text-green-600 dark:text-green-400 font-medium">
+                                <span>Campaign Length:</span>
+                                <span>{formData.repeatMonths} + {calculatedValues.freeMonths} months</span>
+                              </div>
+                              <div className="flex justify-between text-sm">
+                                <span>Total Investment:</span>
+                                <span>₹{(formData.budget * formData.repeatMonths).toLocaleString()}</span>
+                              </div>
+                              <div className="flex justify-between text-sm text-green-600 dark:text-green-400">
+                                <span>Total Value:</span>
+                                <span>₹{(formData.budget * calculatedValues.totalMonths).toLocaleString()}</span>
+                              </div>
+                            </div>
+                          </>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -1263,14 +1449,6 @@ const BudgetCalculator: React.FC<BudgetCalculatorProps> = ({ isOpen, setIsOpen }
           </DialogFooter>
         </DialogContent>
       </Dialog>
-      
-      {/* Plan selector modal */}
-      <PlanSelector 
-        isOpen={planSelectorOpen} 
-        setIsOpen={setPlanSelectorOpen}
-        onSelectPlan={handlePlanSelection}
-        currentAdType={formData.adType}
-      />
       
       {/* Campaign Details Form Modal */}
       <Dialog open={campaignFormOpen} onOpenChange={setCampaignFormOpen}>
@@ -1363,6 +1541,9 @@ const BudgetCalculator: React.FC<BudgetCalculatorProps> = ({ isOpen, setIsOpen }
           </Form>
         </DialogContent>
       </Dialog>
+      
+      {/* Special offers popup */}
+      <OfferPopup isOpen={offerPopupOpen} setIsOpen={setOfferPopupOpen} />
     </>
   );
 };
