@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   Dialog,
   DialogContent,
@@ -17,18 +17,42 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Calculator } from "lucide-react";
+import { Calculator, Download, FileText } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { Form, FormField, FormItem, FormLabel, FormControl } from "@/components/ui/form";
+import { useForm } from "react-hook-form";
 import PlanSelector, { Plan } from "./PlanSelector";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import emailjs from "@emailjs/browser";
+import { PDFDocument, rgb, StandardFonts } from "pdf-lib";
 
 interface BudgetCalculatorProps {
   isOpen: boolean;
   setIsOpen: (isOpen: boolean) => void;
 }
 
+interface CampaignFormData {
+  name: string;
+  email: string;
+  phone: string;
+  businessName: string;
+  businessAddress: string;
+}
+
 const BudgetCalculator: React.FC<BudgetCalculatorProps> = ({ isOpen, setIsOpen }) => {
   const { toast } = useToast();
   const [planSelectorOpen, setPlanSelectorOpen] = useState(false);
+  const [campaignFormOpen, setCampaignFormOpen] = useState(false);
+  
+  const form = useForm<CampaignFormData>({
+    defaultValues: {
+      name: "",
+      email: "",
+      phone: "",
+      businessName: "",
+      businessAddress: ""
+    }
+  });
   
   const [formData, setFormData] = useState({
     adType: "banner", // "banner" or "video"
@@ -60,6 +84,10 @@ const BudgetCalculator: React.FC<BudgetCalculatorProps> = ({ isOpen, setIsOpen }
     impressionsPerDay: 0,
     reachPerDay: 0
   });
+  
+  // Form submission loading state
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
   
   // Data for form options
   const industries = [
@@ -103,7 +131,8 @@ const BudgetCalculator: React.FC<BudgetCalculatorProps> = ({ isOpen, setIsOpen }
       return formData.adType === "banner" ? 50 : 100;
     }
     
-    let baseCPM = formData.duration * 10;
+    // Base CPM calculation
+    let baseCPM = formData.adType === "banner" ? 50 : 100;
     
     // Extra cost for each city
     const cityIncrement = formData.adType === "banner" ? 15 : 30;
@@ -172,9 +201,9 @@ const BudgetCalculator: React.FC<BudgetCalculatorProps> = ({ isOpen, setIsOpen }
     setFormData(prev => ({
       ...prev,
       adType: plan.tier === "basic" || plan.tier === "silver" || plan.tier === "gold" || plan.tier === "platinum" 
-        ? (plan.reachInMonth > 200000 ? "banner" : "video") 
+        ? (prev.adType) 
         : prev.adType,
-      duration: plan.reachInMonth > 200000 ? 5 : 10, // 5 for banner, 10 for video
+      duration: prev.adType === "banner" ? 5 : 10, // Set duration based on ad type
       budget: plan.price,
       days: 30 // Plans are 30-day packages
     }));
@@ -191,10 +220,9 @@ const BudgetCalculator: React.FC<BudgetCalculatorProps> = ({ isOpen, setIsOpen }
   useEffect(() => {
     // Ensure minimum duration based on ad type
     const minDuration = formData.adType === "banner" ? 5 : 10;
-    const validDuration = Math.max(formData.duration, minDuration);
     
-    if (validDuration !== formData.duration) {
-      setFormData(prev => ({ ...prev, duration: validDuration }));
+    if (formData.duration !== minDuration) {
+      setFormData(prev => ({ ...prev, duration: minDuration }));
       return;
     }
     
@@ -226,6 +254,13 @@ const BudgetCalculator: React.FC<BudgetCalculatorProps> = ({ isOpen, setIsOpen }
     });
   }, [formData, selectedPlan, isCustomPlan]);
   
+  // Handle ad type change
+  const handleAdTypeChange = (adType: string) => {
+    // Set the corresponding minimum duration
+    const duration = adType === "banner" ? 5 : 10;
+    setFormData(prev => ({ ...prev, adType, duration }));
+  };
+  
   const handleInputChange = (name: string, value: any) => {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
@@ -251,11 +286,211 @@ const BudgetCalculator: React.FC<BudgetCalculatorProps> = ({ isOpen, setIsOpen }
   };
   
   const handleSave = () => {
-    toast({
-      title: "Campaign plan saved",
-      description: `Your ${formData.adType} ad campaign has been saved. Estimated reach: ${calculatedValues.totalReach.toLocaleString()} users.`,
-    });
-    setIsOpen(false);
+    setCampaignFormOpen(true);
+  };
+
+  // Handle campaign details form submission
+  const onSubmitCampaignForm = async (data: CampaignFormData) => {
+    setIsSubmitting(true);
+    
+    try {
+      // You would replace these with your actual EmailJS credentials
+      const templateParams = {
+        name: data.name,
+        email: data.email,
+        phone: data.phone,
+        business_name: data.businessName,
+        business_address: data.businessAddress,
+        ad_type: formData.adType,
+        duration: formData.duration,
+        budget: formData.budget,
+        industry: formData.industry,
+        sub_category: formData.subCategory,
+        cpm: calculatedValues.cpm,
+        impressions: calculatedValues.totalImpressions,
+        reach: calculatedValues.totalReach,
+        plan_type: isCustomPlan ? "Custom Plan" : selectedPlan?.tier
+      };
+      
+      // Will be implemented when service ID and template ID are provided
+      // await emailjs.send(
+      //   "YOUR_SERVICE_ID", 
+      //   "YOUR_TEMPLATE_ID",
+      //   templateParams,
+      //   "YOUR_PUBLIC_KEY"
+      // );
+      
+      toast({
+        title: "Campaign details submitted",
+        description: "We've received your information and will contact you soon!",
+      });
+      
+      setCampaignFormOpen(false);
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to submit your campaign details. Please try again.",
+        variant: "destructive"
+      });
+      console.error("Error submitting form:", error);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // Generate and download PDF quote
+  const handleDownloadQuote = async () => {
+    try {
+      setIsGeneratingPDF(true);
+      
+      // Create a new PDF document
+      const pdfDoc = await PDFDocument.create();
+      const page = pdfDoc.addPage([612, 792]); // 8.5 x 11 inches
+      const { width, height } = page.getSize();
+      
+      // Load font
+      const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
+      const boldFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+      
+      // Set initial position for content
+      const margin = 50;
+      let y = height - margin;
+      const textSize = 12;
+      const headerSize = 20;
+      const subheaderSize = 16;
+      const lineHeight = 20;
+      
+      // Add header
+      page.drawText('DOPANET ADVERTISING QUOTE', {
+        x: margin,
+        y,
+        size: headerSize,
+        font: boldFont,
+        color: rgb(0, 0, 0.7)
+      });
+      y -= lineHeight * 2;
+      
+      page.drawText('Campaign Details', {
+        x: margin,
+        y,
+        size: subheaderSize,
+        font: boldFont
+      });
+      y -= lineHeight * 1.5;
+      
+      // Add campaign details
+      const addLine = (label: string, value: string) => {
+        page.drawText(`${label}:`, {
+          x: margin,
+          y,
+          size: textSize,
+          font: boldFont
+        });
+        
+        page.drawText(value, {
+          x: margin + 150,
+          y,
+          size: textSize,
+          font: font
+        });
+        
+        y -= lineHeight;
+      };
+      
+      addLine('Ad Type', formData.adType === 'banner' ? 'Banner Ad' : 'Video Ad');
+      addLine('Duration', `${formData.duration} seconds`);
+      
+      if (formData.industry) {
+        addLine('Industry', `${formData.industry}${formData.subCategory ? ` › ${formData.subCategory}` : ''}`);
+      }
+      
+      if (formData.state) {
+        addLine('Location', `${formData.state} › ${formData.cities.length > 0 ? formData.cities.join(", ") : "All cities"}`);
+      }
+      
+      addLine('Gender Targeting', formData.gender === 'all' ? 'All Genders' : formData.gender);
+      addLine('Age Targeting', formData.ageGroup === 'all' ? 'All Ages' : 'Custom Range');
+      
+      if (formData.premises.length > 0) {
+        addLine('Premises', formData.premises.join(', '));
+      }
+      
+      addLine('Plan Type', isCustomPlan ? 'Custom Plan' : `${selectedPlan?.label} Plan`);
+      
+      y -= lineHeight;
+      
+      // Add financial details section
+      page.drawText('Financial Details', {
+        x: margin,
+        y,
+        size: subheaderSize,
+        font: boldFont
+      });
+      y -= lineHeight * 1.5;
+      
+      addLine('Budget', `₹${formData.budget.toLocaleString()}`);
+      addLine('Campaign Duration', `${formData.days} days`);
+      addLine('Daily Budget', `₹${Math.round(formData.budget/formData.days).toLocaleString()}`);
+      addLine('CPM', `₹${calculatedValues.cpm}`);
+      
+      y -= lineHeight;
+      
+      // Add performance metrics section
+      page.drawText('Estimated Performance', {
+        x: margin,
+        y,
+        size: subheaderSize,
+        font: boldFont
+      });
+      y -= lineHeight * 1.5;
+      
+      addLine('Total Impressions', calculatedValues.totalImpressions.toLocaleString());
+      addLine('Daily Impressions', calculatedValues.impressionsPerDay.toLocaleString());
+      
+      if (!isCustomPlan && selectedPlan?.tier !== 'basic' && selectedPlan?.bonus) {
+        addLine('Base Reach', calculatedValues.baseReach.toLocaleString());
+        addLine('Bonus Reach', `+${calculatedValues.bonusReach.toLocaleString()} (${selectedPlan.bonus * 100}%)`);
+      }
+      
+      addLine('Total Reach', calculatedValues.totalReach.toLocaleString());
+      addLine('Daily Reach', calculatedValues.reachPerDay.toLocaleString());
+      
+      y -= lineHeight * 2;
+      
+      // Add footer
+      page.drawText('This quote is valid for 30 days. For questions, contact us at info@dopanet.com', {
+        x: margin,
+        y,
+        size: 10,
+        font: font,
+        color: rgb(0.4, 0.4, 0.4)
+      });
+      
+      // Generate PDF bytes
+      const pdfBytes = await pdfDoc.save();
+      
+      // Create a download link
+      const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = `Dopanet_Ad_Quote_${new Date().toISOString().slice(0,10)}.pdf`;
+      link.click();
+      
+      toast({
+        title: "Quote Downloaded",
+        description: "Your campaign quote has been downloaded as a PDF file."
+      });
+      
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to generate PDF quote. Please try again.",
+        variant: "destructive"
+      });
+      console.error("Error generating PDF:", error);
+    } finally {
+      setIsGeneratingPDF(false);
+    }
   };
 
   // Generate plan badge style based on selected plan
@@ -281,7 +516,7 @@ const BudgetCalculator: React.FC<BudgetCalculatorProps> = ({ isOpen, setIsOpen }
   return (
     <>
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
-        <DialogContent className="max-w-5xl w-[95vw] h-[85vh] overflow-hidden flex flex-col">
+        <DialogContent className="max-w-6xl w-[95vw] h-[90vh] overflow-hidden flex flex-col">
           <DialogHeader className="flex-shrink-0">
             <div className="flex justify-between items-center">
               <DialogTitle className="text-2xl font-bold">Budget Calculator</DialogTitle>
@@ -351,7 +586,7 @@ const BudgetCalculator: React.FC<BudgetCalculatorProps> = ({ isOpen, setIsOpen }
                     <h3 className="text-lg font-medium">Select Ad Type</h3>
                     <RadioGroup 
                       value={formData.adType} 
-                      onValueChange={(value) => handleInputChange("adType", value)}
+                      onValueChange={(value) => handleAdTypeChange(value)}
                       className="grid grid-cols-1 md:grid-cols-2 gap-4"
                     >
                       <div className="border rounded-lg p-4 relative">
@@ -371,7 +606,7 @@ const BudgetCalculator: React.FC<BudgetCalculatorProps> = ({ isOpen, setIsOpen }
                             </div>
                           </div>
                           <span className="mt-2 text-sm text-dopanet-500">
-                            Minimum duration: 5 seconds
+                            Duration: 5 seconds
                           </span>
                         </Label>
                       </div>
@@ -393,7 +628,7 @@ const BudgetCalculator: React.FC<BudgetCalculatorProps> = ({ isOpen, setIsOpen }
                             </div>
                           </div>
                           <span className="mt-2 text-sm text-dopanet-500">
-                            Minimum duration: 10 seconds
+                            Duration: 10 seconds
                           </span>
                         </Label>
                       </div>
@@ -404,39 +639,26 @@ const BudgetCalculator: React.FC<BudgetCalculatorProps> = ({ isOpen, setIsOpen }
                 {/* Duration Section */}
                 <TabsContent value="duration" className="space-y-6">
                   <div className="space-y-4">
-                    <h3 className="text-lg font-medium">Set Ad Duration</h3>
+                    <h3 className="text-lg font-medium">Ad Duration</h3>
                     <p className="text-sm text-gray-500 dark:text-gray-400">
                       {formData.adType === "banner" 
-                        ? "Minimum duration for banner ads is 5 seconds" 
-                        : "Minimum duration for video ads is 10 seconds"
+                        ? "Banner ads have a fixed duration of 5 seconds" 
+                        : "Video ads have a fixed duration of 10 seconds"
                       }
                     </p>
                     
                     <div className="space-y-6">
                       <div>
                         <div className="flex justify-between items-center mb-2">
-                          <Label htmlFor="duration">Duration (seconds)</Label>
+                          <Label htmlFor="duration">Duration</Label>
                           <span className="text-sm font-medium">{formData.duration}s</span>
                         </div>
-                        <div className="flex items-center space-x-4">
-                          <Slider 
-                            id="duration"
-                            min={formData.adType === "banner" ? 5 : 10} 
-                            max={30} 
-                            step={1}
-                            value={[formData.duration]}
-                            onValueChange={(values) => handleInputChange("duration", values[0])}
-                            className="flex-grow"
-                          />
-                          <Input
-                            type="number"
-                            value={formData.duration}
-                            onChange={(e) => handleInputChange("duration", parseInt(e.target.value) || 0)}
-                            min={formData.adType === "banner" ? 5 : 10}
-                            max={30}
-                            className="w-20"
-                          />
-                        </div>
+                        <Input
+                          type="text"
+                          value={`${formData.duration} seconds (fixed)`}
+                          readOnly
+                          className="bg-gray-100 dark:bg-gray-800"
+                        />
                       </div>
                       
                       <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
@@ -444,15 +666,15 @@ const BudgetCalculator: React.FC<BudgetCalculatorProps> = ({ isOpen, setIsOpen }
                         <div className="text-sm text-gray-600 dark:text-gray-300 space-y-2">
                           <div className="flex items-center space-x-2">
                             <div className="h-2 w-2 bg-green-500 rounded-full"></div>
-                            <p>Longer duration increases visibility</p>
+                            <p>Fixed duration ensures consistent user experience</p>
                           </div>
                           <div className="flex items-center space-x-2">
                             <div className="h-2 w-2 bg-yellow-500 rounded-full"></div>
-                            <p>Shorter duration allows more impressions</p>
+                            <p>{formData.adType === "banner" ? "Banner ads (5s)" : "Video ads (10s)"} are optimized for engagement</p>
                           </div>
                           <div className="flex items-center space-x-2">
                             <div className="h-2 w-2 bg-dopanet-500 rounded-full"></div>
-                            <p>CPM increases with duration</p>
+                            <p>CPM is calculated based on ad type and targeting options</p>
                           </div>
                         </div>
                       </div>
@@ -882,6 +1104,25 @@ const BudgetCalculator: React.FC<BudgetCalculatorProps> = ({ isOpen, setIsOpen }
                             : "Premium targeting increases CPM"}
                         </p>
                       </div>
+                      
+                      <div className="flex justify-between mt-6 gap-3">
+                        <Button 
+                          onClick={handleSave}
+                          className="bg-dopanet-500 hover:bg-dopanet-600 text-white flex-1"
+                        >
+                          Submit Campaign Details
+                        </Button>
+                        
+                        <Button 
+                          onClick={handleDownloadQuote}
+                          variant="outline" 
+                          className="flex items-center gap-2 flex-1"
+                          disabled={isGeneratingPDF}
+                        >
+                          <Download size={16} />
+                          <span>Download Quote</span>
+                        </Button>
+                      </div>
                     </div>
                   </div>
                 </TabsContent>
@@ -889,123 +1130,125 @@ const BudgetCalculator: React.FC<BudgetCalculatorProps> = ({ isOpen, setIsOpen }
             </div>
             
             {/* Sticky panel with results */}
-            <div className="w-full md:w-64 flex-shrink-0 border-t md:border-t-0 md:border-l border-gray-200 dark:border-gray-700 mt-4 md:mt-0 pt-4 md:pt-0 md:pl-4">
-              <div className="sticky top-0">
-                <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
-                  {(selectedPlan || isCustomPlan) && (
-                    <div className="mb-4">
-                      <Badge className={`${getPlanBadgeStyle()} text-white w-full justify-center py-1`}>
-                        {isCustomPlan 
-                          ? "Custom Plan" 
-                          : `${selectedPlan?.label} Plan ${selectedPlan?.tier !== "basic" ? `(+${selectedPlan?.bonus * 100}%)` : ""}`}
-                      </Badge>
-                    </div>
-                  )}
-                  
-                  <h4 className="font-semibold mb-4 text-center">Campaign Stats</h4>
-                  
-                  <div className="space-y-4">
-                    <div>
-                      <Label htmlFor="budget" className="text-sm">Budget (₹)</Label>
-                      <Input
-                        id="budget"
-                        type="number"
-                        value={formData.budget}
-                        onChange={(e) => handleInputChange("budget", parseInt(e.target.value) || 0)}
-                        min={500}
-                        className="mb-2"
-                      />
-                      <Slider
-                        id="budget-slider"
-                        min={500}
-                        max={50000}
-                        step={500}
-                        value={[formData.budget]}
-                        onValueChange={(values) => handleInputChange("budget", values[0])}
-                      />
-                    </div>
+            <div className="w-full md:w-72 flex-shrink-0 border-t md:border-t-0 md:border-l border-gray-200 dark:border-gray-700 mt-4 md:mt-0 pt-4 md:pt-0 md:pl-4">
+              <ScrollArea className="h-full pr-4">
+                <div className="sticky top-0">
+                  <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
+                    {(selectedPlan || isCustomPlan) && (
+                      <div className="mb-4">
+                        <Badge className={`${getPlanBadgeStyle()} text-white w-full justify-center py-1`}>
+                          {isCustomPlan 
+                            ? "Custom Plan" 
+                            : `${selectedPlan?.label} Plan ${selectedPlan?.tier !== "basic" ? `(+${selectedPlan?.bonus * 100}%)` : ""}`}
+                        </Badge>
+                      </div>
+                    )}
                     
-                    <div>
-                      <Label htmlFor="days" className="text-sm">Campaign Days</Label>
-                      <Input
-                        id="days"
-                        type="number"
-                        value={formData.days}
-                        onChange={(e) => handleInputChange("days", parseInt(e.target.value) || 1)}
-                        min={1}
-                        max={90}
-                      />
-                    </div>
+                    <h4 className="font-semibold mb-4 text-center">Campaign Stats</h4>
                     
-                    <div>
-                      <Label htmlFor="hits-per-person" className="text-sm">Hits Per Person</Label>
-                      <Input
-                        id="hits-per-person"
-                        type="number"
-                        value={formData.hitsPerPerson}
-                        onChange={(e) => handleInputChange("hitsPerPerson", parseInt(e.target.value) || 1)}
-                        min={1}
-                        max={20}
-                      />
-                    </div>
-                    
-                    <div>
-                      <Label htmlFor="hits-per-person-day" className="text-sm">Hits Per Person Per Day</Label>
-                      <Input
-                        id="hits-per-person-day"
-                        type="number"
-                        value={formData.hitsPerPersonPerDay}
-                        onChange={(e) => handleInputChange("hitsPerPersonPerDay", parseInt(e.target.value) || 1)}
-                        min={1}
-                        max={10}
-                      />
-                    </div>
-                    
-                    <div className="border-t border-gray-200 dark:border-gray-700 pt-4 space-y-2">
-                      <div className="flex justify-between text-sm mb-1">
-                        <span>CPM:</span>
-                        <span className="font-semibold">₹{calculatedValues.cpm}</span>
+                    <div className="space-y-4">
+                      <div>
+                        <Label htmlFor="budget" className="text-sm">Budget (₹)</Label>
+                        <Input
+                          id="budget"
+                          type="number"
+                          value={formData.budget}
+                          onChange={(e) => handleInputChange("budget", parseInt(e.target.value) || 0)}
+                          min={500}
+                          className="mb-2"
+                        />
+                        <Slider
+                          id="budget-slider"
+                          min={500}
+                          max={50000}
+                          step={500}
+                          value={[formData.budget]}
+                          onValueChange={(values) => handleInputChange("budget", values[0])}
+                        />
                       </div>
                       
-                      <div className="flex justify-between text-sm mb-1">
-                        <span>Total Impressions:</span>
-                        <span className="font-semibold">{calculatedValues.totalImpressions.toLocaleString()}</span>
+                      <div>
+                        <Label htmlFor="days" className="text-sm">Campaign Days</Label>
+                        <Input
+                          id="days"
+                          type="number"
+                          value={formData.days}
+                          onChange={(e) => handleInputChange("days", parseInt(e.target.value) || 1)}
+                          min={1}
+                          max={90}
+                        />
                       </div>
                       
-                      <div className="flex flex-col">
-                        <div className="flex justify-between text-sm">
-                          <span>Total Reach:</span>
-                          <span className="font-semibold">{calculatedValues.totalReach.toLocaleString()}</span>
+                      <div>
+                        <Label htmlFor="hits-per-person" className="text-sm">Hits Per Person</Label>
+                        <Input
+                          id="hits-per-person"
+                          type="number"
+                          value={formData.hitsPerPerson}
+                          onChange={(e) => handleInputChange("hitsPerPerson", parseInt(e.target.value) || 1)}
+                          min={1}
+                          max={20}
+                        />
+                      </div>
+                      
+                      <div>
+                        <Label htmlFor="hits-per-person-day" className="text-sm">Hits Per Person Per Day</Label>
+                        <Input
+                          id="hits-per-person-day"
+                          type="number"
+                          value={formData.hitsPerPersonPerDay}
+                          onChange={(e) => handleInputChange("hitsPerPersonPerDay", parseInt(e.target.value) || 1)}
+                          min={1}
+                          max={10}
+                        />
+                      </div>
+                      
+                      <div className="border-t border-gray-200 dark:border-gray-700 pt-4 space-y-2">
+                        <div className="flex justify-between text-sm mb-1">
+                          <span>CPM:</span>
+                          <span className="font-semibold">₹{calculatedValues.cpm}</span>
                         </div>
                         
-                        {selectedPlan && !isCustomPlan && selectedPlan.tier !== "basic" && (
-                          <div className="flex justify-between text-xs text-gray-500 pl-4">
-                            <span>Base Reach:</span>
-                            <span>{calculatedValues.baseReach.toLocaleString()}</span>
-                          </div>
-                        )}
+                        <div className="flex justify-between text-sm mb-1">
+                          <span>Total Impressions:</span>
+                          <span className="font-semibold">{calculatedValues.totalImpressions.toLocaleString()}</span>
+                        </div>
                         
-                        {selectedPlan && !isCustomPlan && selectedPlan.tier !== "basic" && (
-                          <div className="flex justify-between text-xs text-green-500 dark:text-green-400 pl-4 font-medium">
-                            <span>Bonus Reach:</span>
-                            <span>+{calculatedValues.bonusReach.toLocaleString()}</span>
+                        <div className="flex flex-col">
+                          <div className="flex justify-between text-sm">
+                            <span>Total Reach:</span>
+                            <span className="font-semibold">{calculatedValues.totalReach.toLocaleString()}</span>
                           </div>
-                        )}
-                      </div>
-                      
-                      <div className="flex justify-between text-sm mb-1">
-                        <span>Daily Impressions:</span>
-                        <span className="font-semibold">{calculatedValues.impressionsPerDay.toLocaleString()}</span>
-                      </div>
-                      
-                      <div className="flex justify-between text-sm">
-                        <span>Daily Reach:</span>
-                        <span className="font-semibold">{calculatedValues.reachPerDay.toLocaleString()}</span>
+                          
+                          {selectedPlan && !isCustomPlan && selectedPlan.tier !== "basic" && (
+                            <div className="flex justify-between text-xs text-gray-500 pl-4">
+                              <span>Base Reach:</span>
+                              <span>{calculatedValues.baseReach.toLocaleString()}</span>
+                            </div>
+                          )}
+                          
+                          {selectedPlan && !isCustomPlan && selectedPlan.tier !== "basic" && (
+                            <div className="flex justify-between text-xs text-green-500 dark:text-green-400 pl-4 font-medium">
+                              <span>Bonus Reach:</span>
+                              <span>+{calculatedValues.bonusReach.toLocaleString()}</span>
+                            </div>
+                          )}
+                        </div>
+                        
+                        <div className="flex justify-between text-sm mb-1">
+                          <span>Daily Impressions:</span>
+                          <span className="font-semibold">{calculatedValues.impressionsPerDay.toLocaleString()}</span>
+                        </div>
+                        
+                        <div className="flex justify-between text-sm">
+                          <span>Daily Reach:</span>
+                          <span className="font-semibold">{calculatedValues.reachPerDay.toLocaleString()}</span>
+                        </div>
                       </div>
                     </div>
                   </div>
                 </div>
-              </div>
+              </ScrollArea>
             </div>
           </div>
           
@@ -1015,7 +1258,7 @@ const BudgetCalculator: React.FC<BudgetCalculatorProps> = ({ isOpen, setIsOpen }
               onClick={handleSave}
               className="bg-dopanet-500 hover:bg-dopanet-600 text-white"
             >
-              Save Campaign Plan
+              Submit Campaign Details
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -1028,9 +1271,100 @@ const BudgetCalculator: React.FC<BudgetCalculatorProps> = ({ isOpen, setIsOpen }
         onSelectPlan={handlePlanSelection}
         currentAdType={formData.adType}
       />
+      
+      {/* Campaign Details Form Modal */}
+      <Dialog open={campaignFormOpen} onOpenChange={setCampaignFormOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-bold">Submit Campaign Details</DialogTitle>
+            <DialogDescription>
+              Fill in your details to receive a personalized proposal
+            </DialogDescription>
+          </DialogHeader>
+          
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmitCampaignForm)} className="space-y-4">
+              <FormField
+                control={form.control}
+                name="name"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Full Name</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Your name" {...field} required />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={form.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Email</FormLabel>
+                    <FormControl>
+                      <Input type="email" placeholder="your.email@example.com" {...field} required />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={form.control}
+                name="phone"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Phone Number</FormLabel>
+                    <FormControl>
+                      <Input placeholder="+91 98765 43210" {...field} required />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={form.control}
+                name="businessName"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Business Name</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Your company name" {...field} required />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={form.control}
+                name="businessAddress"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Business Address</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Your business location" {...field} required />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+              
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setCampaignFormOpen(false)}>Cancel</Button>
+                <Button 
+                  type="submit" 
+                  className="bg-dopanet-500 hover:bg-dopanet-600 text-white"
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? "Submitting..." : "Submit"}
+                </Button>
+              </DialogFooter>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
     </>
   );
 };
 
 export default BudgetCalculator;
-

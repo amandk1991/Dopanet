@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import {
   Dialog,
@@ -175,6 +174,10 @@ const PlanSelector: React.FC<PlanSelectorProps> = ({ isOpen, setIsOpen, onSelect
     );
   };
 
+  const handleTabChange = (value: string) => {
+    setSelectedTab(value as "banner" | "video");
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
@@ -187,7 +190,7 @@ const PlanSelector: React.FC<PlanSelectorProps> = ({ isOpen, setIsOpen, onSelect
 
         <Tabs 
           defaultValue={selectedTab} 
-          onValueChange={(value) => setSelectedTab(value as "banner" | "video")}
+          onValueChange={handleTabChange}
           className="w-full"
         >
           <TabsList className="grid grid-cols-2 w-full max-w-md mx-auto mb-6">

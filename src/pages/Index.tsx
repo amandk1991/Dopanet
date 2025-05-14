@@ -11,6 +11,7 @@ import ContactForm from "@/components/ContactForm";
 import Footer from "@/components/Footer";
 import BudgetCalculator from "@/components/BudgetCalculator";
 import { Button } from "@/components/ui/button";
+import HeroDeviceMockups from "@/components/HeroDeviceMockups";
 
 const Index = () => {
   const [isDarkMode, setIsDarkMode] = useState(false);
@@ -55,7 +56,7 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-white dark:bg-gray-900 overflow-x-hidden">
       <Navbar toggleTheme={toggleTheme} isDarkMode={isDarkMode} />
-      <HeroSection />
+      <HeroSection customComponent={<HeroDeviceMockups />} />
       <AboutSection />
       <HowItWorks />
       <WhyChooseUs />
