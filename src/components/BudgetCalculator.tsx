@@ -281,7 +281,7 @@ const BudgetCalculator: React.FC<BudgetCalculatorProps> = ({ isOpen, setIsOpen }
   return (
     <>
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
-        <DialogContent className="max-w-3xl h-[80vh] overflow-hidden flex flex-col">
+        <DialogContent className="max-w-5xl w-[95vw] h-[85vh] overflow-hidden flex flex-col">
           <DialogHeader className="flex-shrink-0">
             <div className="flex justify-between items-center">
               <DialogTitle className="text-2xl font-bold">Budget Calculator</DialogTitle>
@@ -307,6 +307,30 @@ const BudgetCalculator: React.FC<BudgetCalculatorProps> = ({ isOpen, setIsOpen }
               Plan your campaign and see estimated results in real-time
             </DialogDescription>
           </DialogHeader>
+          
+          {/* Global metrics bar - visible across all tabs */}
+          <div className="bg-gray-50 dark:bg-gray-800 p-3 my-2 rounded-lg grid grid-cols-2 md:grid-cols-5 gap-2 text-sm">
+            <div className="p-2 bg-white dark:bg-gray-900 rounded-md shadow-sm">
+              <div className="font-semibold text-dopanet-600 dark:text-dopanet-400">CPM</div>
+              <div className="text-lg font-bold">₹{calculatedValues.cpm}</div>
+            </div>
+            <div className="p-2 bg-white dark:bg-gray-900 rounded-md shadow-sm">
+              <div className="font-semibold text-dopanet-600 dark:text-dopanet-400">Total Impressions</div>
+              <div className="text-lg font-bold">{calculatedValues.totalImpressions.toLocaleString()}</div>
+            </div>
+            <div className="p-2 bg-white dark:bg-gray-900 rounded-md shadow-sm">
+              <div className="font-semibold text-dopanet-600 dark:text-dopanet-400">Total Reach</div>
+              <div className="text-lg font-bold">{calculatedValues.totalReach.toLocaleString()}</div>
+            </div>
+            <div className="p-2 bg-white dark:bg-gray-900 rounded-md shadow-sm">
+              <div className="font-semibold text-dopanet-600 dark:text-dopanet-400">Impressions/Day</div>
+              <div className="text-lg font-bold">{calculatedValues.impressionsPerDay.toLocaleString()}</div>
+            </div>
+            <div className="p-2 bg-white dark:bg-gray-900 rounded-md shadow-sm">
+              <div className="font-semibold text-dopanet-600 dark:text-dopanet-400">Reach/Day</div>
+              <div className="text-lg font-bold">{calculatedValues.reachPerDay.toLocaleString()}</div>
+            </div>
+          </div>
           
           <div className="flex flex-col md:flex-row h-full overflow-hidden">
             {/* Main Content - Scrollable Tabs */}
@@ -1009,3 +1033,4 @@ const BudgetCalculator: React.FC<BudgetCalculatorProps> = ({ isOpen, setIsOpen }
 };
 
 export default BudgetCalculator;
+

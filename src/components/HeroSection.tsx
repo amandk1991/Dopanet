@@ -2,11 +2,13 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { Wifi, ArrowRight } from "lucide-react";
+import { AspectRatio } from "@/components/ui/aspect-ratio";
 
 const HeroSection: React.FC = () => {
   return (
     <section id="home" className="hero-gradient min-h-screen flex items-center relative overflow-hidden pt-20">
-      <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1519389950473-47ba0277781c?auto=format&fit=crop&q=80&w=1920')] bg-cover bg-center opacity-10"></div>
+      <div className="absolute inset-0 bg-gradient-to-br from-dopanet-900/60 to-black/60 z-0"></div>
+      <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1605810230434-7631ac76ec81?auto=format&fit=crop&q=80&w=1920')] bg-cover bg-center opacity-15 mix-blend-overlay"></div>
       
       <div className="container mx-auto px-4 py-20 md:py-32 relative z-10">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
@@ -53,12 +55,87 @@ const HeroSection: React.FC = () => {
               <div className="absolute -top-8 -left-8 w-64 h-64 bg-dopanet-400 rounded-full mix-blend-multiply filter blur-2xl opacity-50 animate-float"></div>
               <div className="absolute -bottom-8 -right-8 w-64 h-64 bg-teal-400 rounded-full mix-blend-multiply filter blur-2xl opacity-50 animate-float" style={{ animationDelay: "1.5s" }}></div>
               
-              <div className="glass-card p-6 relative">
-                <img
-                  src="https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?auto=format&fit=crop&q=80&w=500"
-                  alt="User enjoying Dopanet free WiFi"
-                  className="rounded-lg shadow-lg w-full max-w-md"
-                />
+              {/* New device mockup showing ads */}
+              <div className="glass-card p-4 relative flex">
+                {/* Mobile device mockup */}
+                <div className="relative mr-5 shadow-xl">
+                  <div className="w-[180px] bg-gray-800 rounded-[24px] p-2 shadow-lg">
+                    <div className="bg-black rounded-[18px] overflow-hidden">
+                      <div className="w-full h-[350px] relative">
+                        <div className="absolute top-0 left-0 w-full h-12 bg-gray-900 flex justify-center items-center">
+                          <div className="w-20 h-5 bg-black rounded-full"></div>
+                        </div>
+                        
+                        {/* Main screen content */}
+                        <div className="w-full h-full pt-12 bg-white">
+                          <div className="h-full w-full relative flex flex-col">
+                            <div className="flex-1 p-2">
+                              <div className="w-full h-20 bg-gray-100 rounded-lg mb-2"></div>
+                              <div className="w-full h-20 bg-gray-100 rounded-lg mb-2"></div>
+                              <div className="w-full h-20 bg-gray-100 rounded-lg"></div>
+                            </div>
+                            
+                            {/* Ad overlay at bottom */}
+                            <div className="h-24 bg-gradient-to-r from-dopanet-500 to-teal-500 p-3 flex items-center">
+                              <div className="w-16 h-16 bg-white rounded-lg flex-shrink-0 flex items-center justify-center text-2xl">
+                                🛍️
+                              </div>
+                              <div className="ml-3 text-white">
+                                <div className="text-xs font-bold">SPECIAL OFFER</div>
+                                <div className="text-sm">20% off all new arrivals!</div>
+                                <div className="text-xs mt-1 bg-white text-dopanet-600 rounded-full px-2 py-0.5 inline-block">Shop Now</div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Laptop device mockup */}
+                <div className="relative shadow-xl">
+                  <div className="w-[320px] bg-gray-800 rounded-lg p-2 pt-1 shadow-lg">
+                    <div className="w-full h-4 mb-1 flex justify-center items-center">
+                      <div className="w-2 h-2 bg-gray-600 rounded-full"></div>
+                    </div>
+                    <div className="bg-black rounded overflow-hidden">
+                      <div className="w-full h-[200px] relative">
+                        {/* Laptop screen content */}
+                        <div className="w-full h-full bg-white">
+                          <div className="h-full w-full relative flex flex-col">
+                            <div className="h-8 bg-gray-200 flex items-center px-3">
+                              <div className="flex space-x-1">
+                                <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+                                <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
+                                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                              </div>
+                            </div>
+                            
+                            <div className="flex-1 p-2 flex">
+                              {/* Main content */}
+                              <div className="flex-1">
+                                <div className="w-full h-4 bg-gray-100 rounded mb-2"></div>
+                                <div className="w-full h-4 bg-gray-100 rounded mb-2"></div>
+                                <div className="w-3/4 h-4 bg-gray-100 rounded"></div>
+                              </div>
+                              
+                              {/* Ad overlay on side */}
+                              <div className="w-24 bg-gradient-to-b from-dopanet-500 to-teal-500 rounded p-2 flex flex-col items-center">
+                                <div className="w-full h-14 bg-white rounded flex items-center justify-center text-2xl">
+                                  🍕
+                                </div>
+                                <div className="text-white text-xs mt-2 text-center font-medium">Get 50% off first order!</div>
+                                <div className="mt-2 bg-white text-dopanet-600 rounded-full px-2 py-1 text-[10px] font-bold">Order Now</div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="w-[350px] h-4 bg-gray-800 mt-1 mx-auto rounded-b-xl"></div>
+                </div>
                 
                 <div className="absolute -bottom-6 -right-6 glass-card p-4 shadow-lg">
                   <div className="flex items-center space-x-2">
