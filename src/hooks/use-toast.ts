@@ -7,6 +7,7 @@ export interface Toast {
   description?: string;
   action?: React.ReactNode;
   duration?: number;
+  variant?: "default" | "destructive";
 }
 
 export type ToastActionElement = React.ReactElement;
@@ -43,4 +44,8 @@ export function useToast() {
   };
 }
 
-export { toast };
+// Define a standalone toast function that we can export
+// This creates a singleton instance of useToast() to use globally
+const { toast: toastFunction, toasts, dismiss } = useToast();
+
+export { toastFunction as toast };
