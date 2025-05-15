@@ -52,11 +52,19 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
     setToasts((toasts) => toasts.filter((t) => t.id !== id));
   };
 
-  return (
-    <ToastContext.Provider value={{ toasts, toast, dismiss }}>
-      {children}
-    </ToastContext.Provider>
-  );
+  // Create provider value
+  const providerValue: ToastContextType = {
+    toasts,
+    toast,
+    dismiss
+  };
+  
+  // Return the context provider
+  return {
+    Provider: ({ children }: { children: React.ReactNode }) => (
+      ToastContext.Provider({ value: providerValue, children })
+    )
+  };
 }
 
 // Step 3: Export a hook to use the toast functionality
