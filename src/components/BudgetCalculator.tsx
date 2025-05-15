@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import {
   Dialog,
@@ -18,6 +19,7 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { Form, FormField, FormItem, FormLabel, FormControl } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
+import { Download } from "lucide-react"; // Add this import
 import PlanSelectorButtons from "./PlanSelectorButtons";
 import TimeSlotSelector from "./TimeSlotSelector";
 import OfferPopup from "./OfferPopup";
