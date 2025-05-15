@@ -50,7 +50,13 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
     setToasts((toasts) => toasts.filter((t) => t.id !== id));
   };
 
-  return { toasts, toast, dismiss };
+  const contextValue = { toasts, toast, dismiss };
+  
+  return (
+    <ToastContext.Provider value={contextValue}>
+      {children}
+    </ToastContext.Provider>
+  );
 }
 
 export const useToast = () => {
