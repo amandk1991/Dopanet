@@ -12,7 +12,6 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import { toast } from "@/components/ui/use-toast";
 
 export interface Plan {
   tier: "basic" | "silver" | "gold" | "platinum";
@@ -21,7 +20,6 @@ export interface Plan {
   price: number;
   reachInMonth: number;
   reachPerDay: number;
-  adType?: string;
 }
 
 interface BannerPlans {
@@ -187,13 +185,6 @@ const PlanSelector: React.FC<PlanSelectorProps> = ({ isOpen, setIsOpen, onSelect
       ...plan,
       adType: selectedTab // Ensure the plan knows which ad type it belongs to
     };
-    
-    toast({
-      title: "Plan Selected",
-      description: `You selected the ${plan.tier} plan for ₹${plan.price.toLocaleString()}`,
-      variant: "default"
-    });
-    
     onSelectPlan(modifiedPlan as Plan);
     setIsOpen(false);
   };

@@ -11,7 +11,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { toast } from "@/components/ui/use-toast";
+import { Download } from "lucide-react";
 
 interface PlanSelectorButtonsProps {
   onPlanSelect: (plan: Plan) => void;
@@ -37,7 +37,7 @@ const PlanSelectorButtons: React.FC<PlanSelectorButtonsProps> = ({
   const getPlans = (adType: string, tier: "basic" | "silver" | "gold" | "platinum") => {
     const isVideo = adType === "video";
     
-    // Default values
+    // Base prices and reach values based on the image provided
     let price = 0;
     let reachInMonth = 0;
     let reachPerDay = 0;
@@ -47,30 +47,95 @@ const PlanSelectorButtons: React.FC<PlanSelectorButtonsProps> = ({
       // Video ads (10 seconds) - 100 ₹ CPM
       switch (tier) {
         case "basic":
-          price = 1499;
-          reachInMonth = 15000;
-          reachPerDay = 500;
+          if (price === 999) {
+            reachInMonth = 10000;
+            reachPerDay = 333;
+          } else if (price === 1499) {
+            reachInMonth = 15000;
+            reachPerDay = 500;
+          } else if (price === 1999) {
+            reachInMonth = 20000;
+            reachPerDay = 667;
+          } else if (price === 2999) {
+            reachInMonth = 30000;
+            reachPerDay = 1000;
+          } else if (price === 4999) {
+            reachInMonth = 50000;
+            reachPerDay = 1666;
+          } else if (price === 9999) {
+            reachInMonth = 100000;
+            reachPerDay = 3334;
+          } else {
+            price = 1499;
+            reachInMonth = 15000;
+            reachPerDay = 500;
+          }
           bonus = 0;
           break;
           
         case "silver":
-          price = 19999;
-          reachInMonth = 220000;
-          reachPerDay = 7500;
+          if (price === 19999) {
+            reachInMonth = 220000;
+            reachPerDay = 7500;
+          } else if (price === 29999) {
+            reachInMonth = 330000;
+            reachPerDay = 11000;
+          } else if (price === 39999) {
+            reachInMonth = 440000;
+            reachPerDay = 14667;
+          } else if (price === 49999) {
+            reachInMonth = 550000;
+            reachPerDay = 18333;
+          } else {
+            price = 19999;
+            reachInMonth = 220000;
+            reachPerDay = 7500;
+          }
           bonus = 0.1; // 10% bonus
           break;
           
         case "gold":
-          price = 99999;
-          reachInMonth = 1150000;
-          reachPerDay = 38333;
+          if (price === 99999) {
+            reachInMonth = 1150000;
+            reachPerDay = 38333;
+          } else if (price === 149999) {
+            reachInMonth = 1800000;
+            reachPerDay = 76667;
+          } else if (price === 199999) {
+            reachInMonth = 2300000;
+            reachPerDay = 115000;
+          } else if (price === 399999) {
+            reachInMonth = 4600000;
+            reachPerDay = 153333;
+          } else if (price === 499999) {
+            reachInMonth = 5750000;
+            reachPerDay = 191667;
+          } else {
+            price = 99999;
+            reachInMonth = 1150000;
+            reachPerDay = 38333;
+          }
           bonus = 0.15; // 15% bonus
           break;
           
         case "platinum":
-          price = 999999;
-          reachInMonth = 12000000;
-          reachPerDay = 400000;
+          if (price === 999999) {
+            reachInMonth = 12000000;
+            reachPerDay = 400000;
+          } else if (price === 1499999) {
+            reachInMonth = 15000000;
+            reachPerDay = 600000;
+          } else if (price === 1999999) {
+            reachInMonth = 24000000;
+            reachPerDay = 800000;
+          } else if (price === 2499999) {
+            reachInMonth = 30000000;
+            reachPerDay = 1000000;
+          } else {
+            price = 999999;
+            reachInMonth = 12000000;
+            reachPerDay = 400000;
+          }
           bonus = 0.2; // 20% bonus
           break;
       }
@@ -78,32 +143,148 @@ const PlanSelectorButtons: React.FC<PlanSelectorButtonsProps> = ({
       // Banner ads (5 seconds) - 50 ₹ CPM
       switch (tier) {
         case "basic":
-          price = 1499;
-          reachInMonth = 30000;
-          reachPerDay = 1000;
+          if (price === 999) {
+            reachInMonth = 20000;
+            reachPerDay = 667;
+          } else if (price === 1499) {
+            reachInMonth = 30000;
+            reachPerDay = 1000;
+          } else if (price === 1999) {
+            reachInMonth = 40000;
+            reachPerDay = 1335;
+          } else if (price === 2999) {
+            reachInMonth = 60000;
+            reachPerDay = 2000;
+          } else if (price === 4999) {
+            reachInMonth = 100000;
+            reachPerDay = 3335;
+          } else if (price === 9999) {
+            reachInMonth = 200000;
+            reachPerDay = 6667;
+          } else {
+            price = 1499;
+            reachInMonth = 30000;
+            reachPerDay = 1000;
+          }
           bonus = 0;
           break;
           
         case "silver":
-          price = 19999;
-          reachInMonth = 440000;
-          reachPerDay = 15000;
+          if (price === 19999) {
+            reachInMonth = 440000;
+            reachPerDay = 15000;
+          } else if (price === 29999) {
+            reachInMonth = 660000;
+            reachPerDay = 22000;
+          } else if (price === 39999) {
+            reachInMonth = 880000;
+            reachPerDay = 29333;
+          } else if (price === 49999) {
+            reachInMonth = 1100000;
+            reachPerDay = 36666;
+          } else {
+            price = 19999;
+            reachInMonth = 440000;
+            reachPerDay = 15000;
+          }
           bonus = 0.1; // 10% bonus
           break;
           
         case "gold":
-          price = 99999;
-          reachInMonth = 2300000;
-          reachPerDay = 76666;
+          if (price === 99999) {
+            reachInMonth = 2300000;
+            reachPerDay = 76666;
+          } else if (price === 149999) {
+            reachInMonth = 3450000;
+            reachPerDay = 153333;
+          } else if (price === 299999) {
+            reachInMonth = 6900000;
+            reachPerDay = 230000;
+          } else if (price === 399999) {
+            reachInMonth = 9200000;
+            reachPerDay = 306666;
+          } else if (price === 499999) {
+            reachInMonth = 11500000;
+            reachPerDay = 383333;
+          } else {
+            price = 99999;
+            reachInMonth = 2300000;
+            reachPerDay = 76666;
+          }
           bonus = 0.15; // 15% bonus
           break;
           
         case "platinum":
-          price = 999999;
-          reachInMonth = 23000000;
-          reachPerDay = 800000;
+          if (price === 999999) {
+            reachInMonth = 23000000;
+            reachPerDay = 800000;
+          } else if (price === 1499999) {
+            reachInMonth = 34500000;
+            reachPerDay = 1200000;
+          } else if (price === 1999999) {
+            reachInMonth = 46000000;
+            reachPerDay = 1600000;
+          } else if (price === 2499999) {
+            reachInMonth = 57500000;
+            reachPerDay = 2000000;
+          } else {
+            price = 999999;
+            reachInMonth = 23000000;
+            reachPerDay = 800000;
+          }
           bonus = 0.2; // 20% bonus
           break;
+      }
+    }
+    
+    // Default prices if not matched in switch statements
+    if (price === 0) {
+      if (isVideo) {
+        switch (tier) {
+          case "basic":
+            price = 1499;
+            reachInMonth = 15000;
+            reachPerDay = 500;
+            break;
+          case "silver":
+            price = 19999;
+            reachInMonth = 220000;
+            reachPerDay = 7500;
+            break;
+          case "gold":
+            price = 99999;
+            reachInMonth = 1150000;
+            reachPerDay = 38333;
+            break;
+          case "platinum":
+            price = 999999;
+            reachInMonth = 12000000;
+            reachPerDay = 400000;
+            break;
+        }
+      } else {
+        switch (tier) {
+          case "basic":
+            price = 1499;
+            reachInMonth = 30000;
+            reachPerDay = 1000;
+            break;
+          case "silver":
+            price = 19999;
+            reachInMonth = 440000;
+            reachPerDay = 15000;
+            break;
+          case "gold":
+            price = 99999;
+            reachInMonth = 2300000;
+            reachPerDay = 76666;
+            break;
+          case "platinum":
+            price = 999999;
+            reachInMonth = 23000000;
+            reachPerDay = 800000;
+            break;
+        }
       }
     }
     
@@ -114,21 +295,15 @@ const PlanSelectorButtons: React.FC<PlanSelectorButtonsProps> = ({
     if (selectedTier) {
       const planInfo = getPlans(currentAdType, selectedTier);
       
+      // Create the plan object with the correct type
       const plan: Plan = {
         tier: selectedTier,
         label: selectedTier.charAt(0).toUpperCase() + selectedTier.slice(1),
         price: planInfo.price,
         bonus: planInfo.bonus,
         reachInMonth: planInfo.reachInMonth,
-        reachPerDay: planInfo.reachPerDay,
-        adType: currentAdType
+        reachPerDay: planInfo.reachPerDay
       };
-      
-      toast({
-        title: "Plan Selected",
-        description: `Selected ${plan.label} plan with ${plan.reachInMonth.toLocaleString()} monthly reach`,
-        variant: "default"
-      });
       
       onPlanSelect(plan);
       setSelectedCategory(selectedTier);
@@ -200,7 +375,7 @@ const PlanSelectorButtons: React.FC<PlanSelectorButtonsProps> = ({
                 <div className="p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
                   <div className="text-sm text-gray-500 dark:text-gray-400">Price</div>
                   <div className="text-xl font-bold">
-                    ₹{getPlans(currentAdType, selectedTier).price.toLocaleString()}
+                    ₹{getPlans(currentAdType, selectedTier).price}
                   </div>
                 </div>
                 
