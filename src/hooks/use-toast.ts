@@ -43,4 +43,8 @@ export function useToast() {
   };
 }
 
-export { toast };
+// For direct usage of toast function
+export const toast = (props: Omit<Toast, "id">) => {
+  // This is a placeholder that will be overridden in components/ui/use-toast.ts
+  throw new Error("toast() is not implemented. You need to use the useToast() hook instead.");
+};
