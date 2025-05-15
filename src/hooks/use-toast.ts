@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import * as React from "react";
 import { createContext, useContext } from "react";
 
 export interface Toast {
@@ -24,7 +24,7 @@ const ToastContext = createContext<ToastContextType | undefined>(undefined);
 
 // Step 2: Create a provider component that will wrap our application
 export function ToastProvider({ children }: { children: React.ReactNode }) {
-  const [toasts, setToasts] = useState<Toast[]>([]);
+  const [toasts, setToasts] = React.useState<Toast[]>([]);
 
   const toast = (props: Omit<Toast, "id">) => {
     const id = Math.random().toString(36).slice(2);
@@ -52,19 +52,13 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
     setToasts((toasts) => toasts.filter((t) => t.id !== id));
   };
 
-  // Create provider value
-  const providerValue: ToastContextType = {
-    toasts,
-    toast,
-    dismiss
-  };
-  
-  // Return the context provider
-  return {
-    Provider: ({ children }: { children: React.ReactNode }) => (
-      ToastContext.Provider({ value: providerValue, children })
-    )
-  };
+  const value = { toasts, toast, dismiss };
+
+  return (
+    <ToastContext.Provider value={value}>
+      {children}
+    </ToastContext.Provider>
+  );
 }
 
 // Step 3: Export a hook to use the toast functionality
