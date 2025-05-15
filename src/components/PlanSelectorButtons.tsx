@@ -36,37 +36,301 @@ const PlanSelectorButtons: React.FC<PlanSelectorButtonsProps> = ({
   const getPlans = (adType: string, tier: "basic" | "silver" | "gold" | "platinum") => {
     const isVideo = adType === "video";
     
-    // Base prices and reach values
+    // Base prices and reach values based on the image provided
     let price = 0;
     let reachInMonth = 0;
     let reachPerDay = 0;
     let bonus = 0;
     
-    switch (tier) {
-      case "basic":
-        price = isVideo ? 2999 : 1499;
-        reachInMonth = isVideo ? 7500 : 15000;
-        reachPerDay = Math.round(reachInMonth / 30);
-        bonus = 0;
-        break;
-      case "silver":
-        price = isVideo ? 4999 : 2499;
-        reachInMonth = isVideo ? 15000 : 30000;
-        reachPerDay = Math.round(reachInMonth / 30);
-        bonus = 0.1; // 10% bonus
-        break;
-      case "gold":
-        price = isVideo ? 9999 : 4999;
-        reachInMonth = isVideo ? 30000 : 60000;
-        reachPerDay = Math.round(reachInMonth / 30);
-        bonus = 0.15; // 15% bonus
-        break;
-      case "platinum":
-        price = isVideo ? 19999 : 9999;
-        reachInMonth = isVideo ? 60000 : 120000;
-        reachPerDay = Math.round(reachInMonth / 30);
-        bonus = 0.2; // 20% bonus
-        break;
+    if (isVideo) {
+      // Video ads (10 seconds) - 100 ₹ CPM
+      switch (tier) {
+        case "basic":
+          switch (price) {
+            case 999:
+              reachInMonth = 10000;
+              reachPerDay = 333;
+              break;
+            case 1499:
+              reachInMonth = 15000;
+              reachPerDay = 500;
+              break;
+            case 1999:
+              reachInMonth = 20000;
+              reachPerDay = 667;
+              break;
+            case 2999:
+              reachInMonth = 30000;
+              reachPerDay = 1000;
+              break;
+            case 4999:
+              reachInMonth = 50000;
+              reachPerDay = 1667;
+              break;
+            case 9999:
+              reachInMonth = 100000;
+              reachPerDay = 3334;
+              break;
+            default:
+              price = 1499;
+              reachInMonth = 15000;
+              reachPerDay = 500;
+          }
+          bonus = 0;
+          break;
+          
+        case "silver":
+          switch (price) {
+            case 19999:
+              reachInMonth = 220000;
+              reachPerDay = 7500;
+              break;
+            case 29999:
+              reachInMonth = 330000;
+              reachPerDay = 11000;
+              break;
+            case 39999:
+              reachInMonth = 440000;
+              reachPerDay = 14667;
+              break;
+            case 49999:
+              reachInMonth = 550000;
+              reachPerDay = 18333;
+              break;
+            default:
+              price = 19999;
+              reachInMonth = 220000;
+              reachPerDay = 7500;
+          }
+          bonus = 0.1; // 10% bonus
+          break;
+          
+        case "gold":
+          switch (price) {
+            case 99999:
+              reachInMonth = 1150000;
+              reachPerDay = 38333;
+              break;
+            case 149999:
+              reachInMonth = 1800000;
+              reachPerDay = 76667;
+              break;
+            case 199999:
+              reachInMonth = 2300000;
+              reachPerDay = 135000;
+              break;
+            case 399999:
+              reachInMonth = 4600000;
+              reachPerDay = 153333;
+              break;
+            case 499999:
+              reachInMonth = 5750000;
+              reachPerDay = 191667;
+              break;
+            default:
+              price = 99999;
+              reachInMonth = 1150000;
+              reachPerDay = 38333;
+          }
+          bonus = 0.15; // 15% bonus
+          break;
+          
+        case "platinum":
+          switch (price) {
+            case 999999:
+              reachInMonth = 12000000;
+              reachPerDay = 400000;
+              break;
+            case 1499999:
+              reachInMonth = 15000000;
+              reachPerDay = 600000;
+              break;
+            case 1999999:
+              reachInMonth = 24000000;
+              reachPerDay = 800000;
+              break;
+            case 2499999:
+              reachInMonth = 30000000;
+              reachPerDay = 1000000;
+              break;
+            default:
+              price = 999999;
+              reachInMonth = 12000000;
+              reachPerDay = 400000;
+          }
+          bonus = 0.2; // 20% bonus
+          break;
+      }
+    } else {
+      // Banner ads (5 seconds) - 50 ₹ CPM
+      switch (tier) {
+        case "basic":
+          switch (price) {
+            case 999:
+              reachInMonth = 20000;
+              reachPerDay = 667;
+              break;
+            case 1499:
+              reachInMonth = 30000;
+              reachPerDay = 1000;
+              break;
+            case 1999:
+              reachInMonth = 40000;
+              reachPerDay = 1335;
+              break;
+            case 2999:
+              reachInMonth = 60000;
+              reachPerDay = 2000;
+              break;
+            case 4999:
+              reachInMonth = 100000;
+              reachPerDay = 3335;
+              break;
+            case 9999:
+              reachInMonth = 200000;
+              reachPerDay = 6667;
+              break;
+            default:
+              price = 1499;
+              reachInMonth = 30000;
+              reachPerDay = 1000;
+          }
+          bonus = 0;
+          break;
+          
+        case "silver":
+          switch (price) {
+            case 19999:
+              reachInMonth = 440000;
+              reachPerDay = 15000;
+              break;
+            case 29999:
+              reachInMonth = 660000;
+              reachPerDay = 22000;
+              break;
+            case 39999:
+              reachInMonth = 880000;
+              reachPerDay = 29333;
+              break;
+            case 49999:
+              reachInMonth = 1100000;
+              reachPerDay = 36666;
+              break;
+            default:
+              price = 19999;
+              reachInMonth = 440000;
+              reachPerDay = 15000;
+          }
+          bonus = 0.1; // 10% bonus
+          break;
+          
+        case "gold":
+          switch (price) {
+            case 99999:
+              reachInMonth = 2300000;
+              reachPerDay = 76666;
+              break;
+            case 149999:
+              reachInMonth = 3450000;
+              reachPerDay = 115000;
+              break;
+            case 299999:
+              reachInMonth = 6900000;
+              reachPerDay = 230000;
+              break;
+            case 399999:
+              reachInMonth = 9200000;
+              reachPerDay = 306666;
+              break;
+            case 499999:
+              reachInMonth = 11500000;
+              reachPerDay = 383333;
+              break;
+            default:
+              price = 99999;
+              reachInMonth = 2300000;
+              reachPerDay = 76666;
+          }
+          bonus = 0.15; // 15% bonus
+          break;
+          
+        case "platinum":
+          switch (price) {
+            case 999999:
+              reachInMonth = 23000000;
+              reachPerDay = 800000;
+              break;
+            case 1499999:
+              reachInMonth = 34500000;
+              reachPerDay = 1200000;
+              break;
+            case 1999999:
+              reachInMonth = 46000000;
+              reachPerDay = 1600000;
+              break;
+            case 2499999:
+              reachInMonth = 57500000;
+              reachPerDay = 2000000;
+              break;
+            default:
+              price = 999999;
+              reachInMonth = 23000000;
+              reachPerDay = 800000;
+          }
+          bonus = 0.2; // 20% bonus
+          break;
+      }
+    }
+    
+    // Default prices if not matched in switch statements
+    if (price === 0) {
+      if (isVideo) {
+        switch (tier) {
+          case "basic":
+            price = 1499;
+            reachInMonth = 15000;
+            reachPerDay = 500;
+            break;
+          case "silver":
+            price = 19999;
+            reachInMonth = 220000;
+            reachPerDay = 7500;
+            break;
+          case "gold":
+            price = 99999;
+            reachInMonth = 1150000;
+            reachPerDay = 38333;
+            break;
+          case "platinum":
+            price = 999999;
+            reachInMonth = 12000000;
+            reachPerDay = 400000;
+            break;
+        }
+      } else {
+        switch (tier) {
+          case "basic":
+            price = 1499;
+            reachInMonth = 30000;
+            reachPerDay = 1000;
+            break;
+          case "silver":
+            price = 19999;
+            reachInMonth = 440000;
+            reachPerDay = 15000;
+            break;
+          case "gold":
+            price = 99999;
+            reachInMonth = 2300000;
+            reachPerDay = 76666;
+            break;
+          case "platinum":
+            price = 999999;
+            reachInMonth = 23000000;
+            reachPerDay = 800000;
+            break;
+        }
+      }
     }
     
     return { tier, price, reachInMonth, reachPerDay, bonus };
