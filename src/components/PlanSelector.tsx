@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -12,7 +12,6 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import { Download } from "lucide-react";
 
 export interface Plan {
   tier: "basic" | "silver" | "gold" | "platinum";
@@ -42,29 +41,10 @@ interface PlanSelectorProps {
   setIsOpen: (isOpen: boolean) => void;
   onSelectPlan: (plan: Plan) => void;
   currentAdType: string;
-  initialSelectedTier?: "basic" | "silver" | "gold" | "platinum" | null;
 }
 
-const PlanSelector: React.FC<PlanSelectorProps> = ({ 
-  isOpen, 
-  setIsOpen, 
-  onSelectPlan, 
-  currentAdType,
-  initialSelectedTier = null
-}) => {
+const PlanSelector: React.FC<PlanSelectorProps> = ({ isOpen, setIsOpen, onSelectPlan, currentAdType }) => {
   const [selectedTab, setSelectedTab] = useState<"banner" | "video">(currentAdType === "video" ? "video" : "banner");
-  
-  // Scroll to the specific tier section when opened with initialSelectedTier
-  useEffect(() => {
-    if (isOpen && initialSelectedTier) {
-      setTimeout(() => {
-        const element = document.getElementById(`${selectedTab}-${initialSelectedTier}-section`);
-        if (element) {
-          element.scrollIntoView({ behavior: "smooth", block: "start" });
-        }
-      }, 100);
-    }
-  }, [isOpen, initialSelectedTier, selectedTab]);
   
   // Banner Plans (5 seconds) as shown in the image
   const bannerPlans: BannerPlans = {
@@ -151,7 +131,7 @@ const PlanSelector: React.FC<PlanSelectorProps> = ({
     };
 
     return (
-      <div id={`${selectedTab}-${tier}-section`} className="mt-4 space-y-4">
+      <div className="mt-4 space-y-4">
         <div className="flex items-center">
           <Badge className={`${tierBadgeColors[tier]} text-white px-4 py-1`}>
             {tier.toUpperCase()} {tier !== "basic" && `(+${plans[0].bonus * 100}% Reach)`}
@@ -186,17 +166,6 @@ const PlanSelector: React.FC<PlanSelectorProps> = ({
                 <div className="flex justify-between text-sm text-gray-500 dark:text-gray-400">
                   <span>Ad Type:</span>
                   <span className="capitalize">{selectedTab}</span>
-                </div>
-                {tier !== "basic" && (
-                  <div className="flex justify-between text-sm text-green-500">
-                    <span>Bonus Reach:</span>
-                    <span>+{plan.bonus * 100}%</span>
-                  </div>
-                )}
-                <div className="mt-2 pt-2 border-t border-gray-200 dark:border-gray-700">
-                  <div className="text-xs text-green-600 dark:text-green-400">
-                    Get 1 month free when you pay for 3 months
-                  </div>
                 </div>
               </div>
             </div>
