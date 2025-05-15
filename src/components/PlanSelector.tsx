@@ -46,7 +46,7 @@ interface PlanSelectorProps {
 const PlanSelector: React.FC<PlanSelectorProps> = ({ isOpen, setIsOpen, onSelectPlan, currentAdType }) => {
   const [selectedTab, setSelectedTab] = useState<"banner" | "video">(currentAdType === "video" ? "video" : "banner");
   
-  // Banner Plans (5 seconds)
+  // Banner Plans (5 seconds) as shown in the image
   const bannerPlans: BannerPlans = {
     basic: [
       { tier: "basic", label: "Basic", bonus: 0, price: 999, reachInMonth: 20000, reachPerDay: 667 },
@@ -70,14 +70,14 @@ const PlanSelector: React.FC<PlanSelectorProps> = ({ isOpen, setIsOpen, onSelect
       { tier: "gold", label: "Gold", bonus: 0.15, price: 499999, reachInMonth: 11500000, reachPerDay: 383333 }
     ],
     platinum: [
-      { tier: "platinum", label: "Platinum", bonus: 0.20, price: 999999, reachInMonth: 24000000, reachPerDay: 800000 },
-      { tier: "platinum", label: "Platinum", bonus: 0.20, price: 1499999, reachInMonth: 36000000, reachPerDay: 1200000 },
-      { tier: "platinum", label: "Platinum", bonus: 0.20, price: 1999999, reachInMonth: 48000000, reachPerDay: 1600000 },
-      { tier: "platinum", label: "Platinum", bonus: 0.20, price: 2499999, reachInMonth: 60000000, reachPerDay: 2000000 }
+      { tier: "platinum", label: "Platinum", bonus: 0.20, price: 999999, reachInMonth: 23000000, reachPerDay: 800000 },
+      { tier: "platinum", label: "Platinum", bonus: 0.20, price: 1499999, reachInMonth: 34500000, reachPerDay: 1200000 },
+      { tier: "platinum", label: "Platinum", bonus: 0.20, price: 1999999, reachInMonth: 46000000, reachPerDay: 1600000 },
+      { tier: "platinum", label: "Platinum", bonus: 0.20, price: 2499999, reachInMonth: 57500000, reachPerDay: 2000000 }
     ]
   };
 
-  // Video Plans (10 seconds)
+  // Video Plans (10 seconds) as shown in the image
   const videoPlans: VideoPlans = {
     basic: [
       { tier: "basic", label: "Basic", bonus: 0, price: 999, reachInMonth: 10000, reachPerDay: 333 },
@@ -88,7 +88,7 @@ const PlanSelector: React.FC<PlanSelectorProps> = ({ isOpen, setIsOpen, onSelect
       { tier: "basic", label: "Basic", bonus: 0, price: 9999, reachInMonth: 100000, reachPerDay: 3334 }
     ],
     silver: [
-      { tier: "silver", label: "Silver", bonus: 0.10, price: 19999, reachInMonth: 220000, reachPerDay: 7330 },
+      { tier: "silver", label: "Silver", bonus: 0.10, price: 19999, reachInMonth: 220000, reachPerDay: 7500 },
       { tier: "silver", label: "Silver", bonus: 0.10, price: 29999, reachInMonth: 330000, reachPerDay: 11000 },
       { tier: "silver", label: "Silver", bonus: 0.10, price: 39999, reachInMonth: 440000, reachPerDay: 14667 },
       { tier: "silver", label: "Silver", bonus: 0.10, price: 49999, reachInMonth: 550000, reachPerDay: 18333 }
@@ -179,14 +179,13 @@ const PlanSelector: React.FC<PlanSelectorProps> = ({ isOpen, setIsOpen, onSelect
     setSelectedTab(value as "banner" | "video");
   };
 
-  // Modified to handle plan selection properly
   const handlePlanSelection = (plan: Plan) => {
     // Create a modified plan that includes the correct ad type
     const modifiedPlan = {
       ...plan,
       adType: selectedTab // Ensure the plan knows which ad type it belongs to
     };
-    onSelectPlan(modifiedPlan);
+    onSelectPlan(modifiedPlan as Plan);
     setIsOpen(false);
   };
 
