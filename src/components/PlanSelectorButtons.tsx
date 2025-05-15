@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Plan } from "./PlanSelector";
@@ -11,7 +10,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { Download } from "lucide-react";
+import PlanSelector from "./PlanSelector";
 
 interface PlanSelectorButtonsProps {
   onPlanSelect: (plan: Plan) => void;
@@ -28,6 +27,7 @@ const PlanSelectorButtons: React.FC<PlanSelectorButtonsProps> = ({
 }) => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedTier, setSelectedTier] = useState<"basic" | "silver" | "gold" | "platinum" | null>(null);
+  const [planSelectorOpen, setPlanSelectorOpen] = useState(false);
 
   const openPlanDialog = (tier: "basic" | "silver" | "gold" | "platinum") => {
     setSelectedTier(tier);
@@ -37,285 +37,74 @@ const PlanSelectorButtons: React.FC<PlanSelectorButtonsProps> = ({
   const getPlans = (adType: string, tier: "basic" | "silver" | "gold" | "platinum") => {
     const isVideo = adType === "video";
     
-    // Base prices and reach values based on the image provided
+    // Base values based on tier
     let price = 0;
     let reachInMonth = 0;
     let reachPerDay = 0;
     let bonus = 0;
     
-    if (isVideo) {
-      // Video ads (10 seconds) - 100 ₹ CPM
-      switch (tier) {
-        case "basic":
-          if (price === 999) {
-            reachInMonth = 10000;
-            reachPerDay = 333;
-          } else if (price === 1499) {
-            reachInMonth = 15000;
-            reachPerDay = 500;
-          } else if (price === 1999) {
-            reachInMonth = 20000;
-            reachPerDay = 667;
-          } else if (price === 2999) {
-            reachInMonth = 30000;
-            reachPerDay = 1000;
-          } else if (price === 4999) {
-            reachInMonth = 50000;
-            reachPerDay = 1666;
-          } else if (price === 9999) {
-            reachInMonth = 100000;
-            reachPerDay = 3334;
-          } else {
-            price = 1499;
-            reachInMonth = 15000;
-            reachPerDay = 500;
-          }
-          bonus = 0;
-          break;
-          
-        case "silver":
-          if (price === 19999) {
-            reachInMonth = 220000;
-            reachPerDay = 7500;
-          } else if (price === 29999) {
-            reachInMonth = 330000;
-            reachPerDay = 11000;
-          } else if (price === 39999) {
-            reachInMonth = 440000;
-            reachPerDay = 14667;
-          } else if (price === 49999) {
-            reachInMonth = 550000;
-            reachPerDay = 18333;
-          } else {
-            price = 19999;
-            reachInMonth = 220000;
-            reachPerDay = 7500;
-          }
-          bonus = 0.1; // 10% bonus
-          break;
-          
-        case "gold":
-          if (price === 99999) {
-            reachInMonth = 1150000;
-            reachPerDay = 38333;
-          } else if (price === 149999) {
-            reachInMonth = 1800000;
-            reachPerDay = 76667;
-          } else if (price === 199999) {
-            reachInMonth = 2300000;
-            reachPerDay = 115000;
-          } else if (price === 399999) {
-            reachInMonth = 4600000;
-            reachPerDay = 153333;
-          } else if (price === 499999) {
-            reachInMonth = 5750000;
-            reachPerDay = 191667;
-          } else {
-            price = 99999;
-            reachInMonth = 1150000;
-            reachPerDay = 38333;
-          }
-          bonus = 0.15; // 15% bonus
-          break;
-          
-        case "platinum":
-          if (price === 999999) {
-            reachInMonth = 12000000;
-            reachPerDay = 400000;
-          } else if (price === 1499999) {
-            reachInMonth = 15000000;
-            reachPerDay = 600000;
-          } else if (price === 1999999) {
-            reachInMonth = 24000000;
-            reachPerDay = 800000;
-          } else if (price === 2499999) {
-            reachInMonth = 30000000;
-            reachPerDay = 1000000;
-          } else {
-            price = 999999;
-            reachInMonth = 12000000;
-            reachPerDay = 400000;
-          }
-          bonus = 0.2; // 20% bonus
-          break;
-      }
-    } else {
-      // Banner ads (5 seconds) - 50 ₹ CPM
-      switch (tier) {
-        case "basic":
-          if (price === 999) {
-            reachInMonth = 20000;
-            reachPerDay = 667;
-          } else if (price === 1499) {
-            reachInMonth = 30000;
-            reachPerDay = 1000;
-          } else if (price === 1999) {
-            reachInMonth = 40000;
-            reachPerDay = 1335;
-          } else if (price === 2999) {
-            reachInMonth = 60000;
-            reachPerDay = 2000;
-          } else if (price === 4999) {
-            reachInMonth = 100000;
-            reachPerDay = 3335;
-          } else if (price === 9999) {
-            reachInMonth = 200000;
-            reachPerDay = 6667;
-          } else {
-            price = 1499;
-            reachInMonth = 30000;
-            reachPerDay = 1000;
-          }
-          bonus = 0;
-          break;
-          
-        case "silver":
-          if (price === 19999) {
-            reachInMonth = 440000;
-            reachPerDay = 15000;
-          } else if (price === 29999) {
-            reachInMonth = 660000;
-            reachPerDay = 22000;
-          } else if (price === 39999) {
-            reachInMonth = 880000;
-            reachPerDay = 29333;
-          } else if (price === 49999) {
-            reachInMonth = 1100000;
-            reachPerDay = 36666;
-          } else {
-            price = 19999;
-            reachInMonth = 440000;
-            reachPerDay = 15000;
-          }
-          bonus = 0.1; // 10% bonus
-          break;
-          
-        case "gold":
-          if (price === 99999) {
-            reachInMonth = 2300000;
-            reachPerDay = 76666;
-          } else if (price === 149999) {
-            reachInMonth = 3450000;
-            reachPerDay = 153333;
-          } else if (price === 299999) {
-            reachInMonth = 6900000;
-            reachPerDay = 230000;
-          } else if (price === 399999) {
-            reachInMonth = 9200000;
-            reachPerDay = 306666;
-          } else if (price === 499999) {
-            reachInMonth = 11500000;
-            reachPerDay = 383333;
-          } else {
-            price = 99999;
-            reachInMonth = 2300000;
-            reachPerDay = 76666;
-          }
-          bonus = 0.15; // 15% bonus
-          break;
-          
-        case "platinum":
-          if (price === 999999) {
-            reachInMonth = 23000000;
-            reachPerDay = 800000;
-          } else if (price === 1499999) {
-            reachInMonth = 34500000;
-            reachPerDay = 1200000;
-          } else if (price === 1999999) {
-            reachInMonth = 46000000;
-            reachPerDay = 1600000;
-          } else if (price === 2499999) {
-            reachInMonth = 57500000;
-            reachPerDay = 2000000;
-          } else {
-            price = 999999;
-            reachInMonth = 23000000;
-            reachPerDay = 800000;
-          }
-          bonus = 0.2; // 20% bonus
-          break;
-      }
-    }
-    
-    // Default prices if not matched in switch statements
-    if (price === 0) {
+    if (tier === "basic") {
+      price = 1499;
+      bonus = 0;
       if (isVideo) {
-        switch (tier) {
-          case "basic":
-            price = 1499;
-            reachInMonth = 15000;
-            reachPerDay = 500;
-            break;
-          case "silver":
-            price = 19999;
-            reachInMonth = 220000;
-            reachPerDay = 7500;
-            break;
-          case "gold":
-            price = 99999;
-            reachInMonth = 1150000;
-            reachPerDay = 38333;
-            break;
-          case "platinum":
-            price = 999999;
-            reachInMonth = 12000000;
-            reachPerDay = 400000;
-            break;
-        }
+        reachInMonth = 15000;
+        reachPerDay = 500;
       } else {
-        switch (tier) {
-          case "basic":
-            price = 1499;
-            reachInMonth = 30000;
-            reachPerDay = 1000;
-            break;
-          case "silver":
-            price = 19999;
-            reachInMonth = 440000;
-            reachPerDay = 15000;
-            break;
-          case "gold":
-            price = 99999;
-            reachInMonth = 2300000;
-            reachPerDay = 76666;
-            break;
-          case "platinum":
-            price = 999999;
-            reachInMonth = 23000000;
-            reachPerDay = 800000;
-            break;
-        }
+        reachInMonth = 30000;
+        reachPerDay = 1000;
+      }
+    } else if (tier === "silver") {
+      price = 19999;
+      bonus = 0.1; // 10% bonus
+      if (isVideo) {
+        reachInMonth = 220000;
+        reachPerDay = 7500;
+      } else {
+        reachInMonth = 440000;
+        reachPerDay = 15000;
+      }
+    } else if (tier === "gold") {
+      price = 99999;
+      bonus = 0.15; // 15% bonus
+      if (isVideo) {
+        reachInMonth = 1150000;
+        reachPerDay = 38333;
+      } else {
+        reachInMonth = 2300000;
+        reachPerDay = 76666;
+      }
+    } else if (tier === "platinum") {
+      price = 999999;
+      bonus = 0.2; // 20% bonus
+      if (isVideo) {
+        reachInMonth = 12000000;
+        reachPerDay = 400000;
+      } else {
+        reachInMonth = 23000000;
+        reachPerDay = 800000;
       }
     }
     
     return { tier, price, reachInMonth, reachPerDay, bonus };
   };
 
-  const handlePlanSelect = () => {
-    if (selectedTier) {
-      const planInfo = getPlans(currentAdType, selectedTier);
-      
-      // Create the plan object with the correct type
-      const plan: Plan = {
-        tier: selectedTier,
-        label: selectedTier.charAt(0).toUpperCase() + selectedTier.slice(1),
-        price: planInfo.price,
-        bonus: planInfo.bonus,
-        reachInMonth: planInfo.reachInMonth,
-        reachPerDay: planInfo.reachPerDay
-      };
-      
-      onPlanSelect(plan);
-      setSelectedCategory(selectedTier);
-      setDialogOpen(false);
-    }
+  const handlePlanSelect = (plan: Plan) => {
+    onPlanSelect(plan);
+    setSelectedCategory(plan.tier);
+    setDialogOpen(false);
+    setPlanSelectorOpen(false);
+  };
+
+  const openFullPlanSelector = (tier: "basic" | "silver" | "gold" | "platinum") => {
+    setSelectedTier(tier);
+    setPlanSelectorOpen(true);
   };
 
   return (
     <>
       <div className="flex flex-wrap gap-2">
         <Button 
-          onClick={() => openPlanDialog("basic")} 
+          onClick={() => openFullPlanSelector("basic")} 
           variant={selectedCategory === "basic" ? "default" : "outline"}
           className={selectedCategory === "basic" ? "bg-blue-500 hover:bg-blue-600 text-white" : ""}
         >
@@ -323,7 +112,7 @@ const PlanSelectorButtons: React.FC<PlanSelectorButtonsProps> = ({
         </Button>
         
         <Button 
-          onClick={() => openPlanDialog("silver")} 
+          onClick={() => openFullPlanSelector("silver")} 
           variant={selectedCategory === "silver" ? "default" : "outline"}
           className={selectedCategory === "silver" ? "bg-gray-400 hover:bg-gray-500 text-white" : ""}
         >
@@ -332,7 +121,7 @@ const PlanSelectorButtons: React.FC<PlanSelectorButtonsProps> = ({
         </Button>
         
         <Button 
-          onClick={() => openPlanDialog("gold")} 
+          onClick={() => openFullPlanSelector("gold")} 
           variant={selectedCategory === "gold" ? "default" : "outline"}
           className={selectedCategory === "gold" ? "bg-yellow-500 hover:bg-yellow-600 text-white" : ""}
         >
@@ -341,7 +130,7 @@ const PlanSelectorButtons: React.FC<PlanSelectorButtonsProps> = ({
         </Button>
         
         <Button 
-          onClick={() => openPlanDialog("platinum")} 
+          onClick={() => openFullPlanSelector("platinum")} 
           variant={selectedCategory === "platinum" ? "default" : "outline"}
           className={selectedCategory === "platinum" ? "bg-purple-500 hover:bg-purple-600 text-white" : ""}
         >
@@ -350,6 +139,16 @@ const PlanSelectorButtons: React.FC<PlanSelectorButtonsProps> = ({
         </Button>
       </div>
 
+      {/* Plan selector dialog */}
+      <PlanSelector
+        isOpen={planSelectorOpen}
+        setIsOpen={setPlanSelectorOpen}
+        onSelectPlan={handlePlanSelect}
+        currentAdType={currentAdType}
+        initialSelectedTier={selectedTier}
+      />
+
+      {/* Legacy dialog that we'll keep for now */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="max-w-md">
           <DialogHeader>
@@ -417,6 +216,10 @@ const PlanSelectorButtons: React.FC<PlanSelectorButtonsProps> = ({
                     <div className="h-1.5 w-1.5 rounded-full bg-green-500"></div>
                     <span>Access to all targeting options</span>
                   </li>
+                  <li className="flex items-center gap-2">
+                    <div className="h-1.5 w-1.5 rounded-full bg-green-500"></div>
+                    <span>Get 1 month free when you pay for 3 months</span>
+                  </li>
                   {selectedTier !== "basic" && (
                     <li className="flex items-center gap-2">
                       <div className="h-1.5 w-1.5 rounded-full bg-green-500"></div>
@@ -445,7 +248,18 @@ const PlanSelectorButtons: React.FC<PlanSelectorButtonsProps> = ({
           <DialogFooter>
             <Button variant="outline" onClick={() => setDialogOpen(false)}>Cancel</Button>
             <Button 
-              onClick={handlePlanSelect}
+              onClick={() => {
+                const planInfo = getPlans(currentAdType, selectedTier!);
+                const plan: Plan = {
+                  tier: selectedTier!,
+                  label: selectedTier!.charAt(0).toUpperCase() + selectedTier!.slice(1),
+                  price: planInfo.price,
+                  bonus: planInfo.bonus,
+                  reachInMonth: planInfo.reachInMonth,
+                  reachPerDay: planInfo.reachPerDay
+                };
+                handlePlanSelect(plan);
+              }}
               className={
                 selectedTier === "basic" ? "bg-blue-500 hover:bg-blue-600 text-white" : 
                 selectedTier === "silver" ? "bg-gray-400 hover:bg-gray-500 text-white" :
