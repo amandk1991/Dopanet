@@ -20,6 +20,7 @@ export interface Plan {
   price: number;
   reachInMonth: number;
   reachPerDay: number;
+  adType?: string;
 }
 
 interface BannerPlans {
@@ -145,7 +146,7 @@ const PlanSelector: React.FC<PlanSelectorProps> = ({ isOpen, setIsOpen, onSelect
                 "border rounded-lg p-4 cursor-pointer transition-all hover:scale-105",
                 tierColors[tier]
               )}
-              onClick={() => handlePlanSelection(plan)}
+              onClick={() => handlePlanSelection({...plan, adType: selectedTab})}
             >
               <div className={cn("font-bold text-xl mb-2", tierTextColors[tier])}>
                 ₹{plan.price.toLocaleString()}
@@ -166,6 +167,20 @@ const PlanSelector: React.FC<PlanSelectorProps> = ({ isOpen, setIsOpen, onSelect
                 <div className="flex justify-between text-sm text-gray-500 dark:text-gray-400">
                   <span>Ad Type:</span>
                   <span className="capitalize">{selectedTab}</span>
+                </div>
+              </div>
+              
+              {tier !== "basic" && (
+                <div className="mt-2 border-t border-gray-200 dark:border-gray-700 pt-2">
+                  <div className="text-xs text-green-600 dark:text-green-400 font-medium">
+                    +{plan.bonus * 100}% bonus reach included
+                  </div>
+                </div>
+              )}
+              
+              <div className="mt-2 border-t border-gray-200 dark:border-gray-700 pt-2">
+                <div className="text-xs text-blue-600 dark:text-blue-400 font-medium">
+                  Book 3 months, get 1 month free!
                 </div>
               </div>
             </div>

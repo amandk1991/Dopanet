@@ -11,7 +11,6 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { Download } from "lucide-react";
 
 interface PlanSelectorButtonsProps {
   onPlanSelect: (plan: Plan) => void;
@@ -143,6 +142,12 @@ const PlanSelectorButtons: React.FC<PlanSelectorButtonsProps> = ({
       // Banner ads (5 seconds) - 50 ₹ CPM
       switch (tier) {
         case "basic":
+          // Set default values first
+          price = 1499;
+          reachInMonth = 30000;
+          reachPerDay = 1000;
+          
+          // Use the values from the image
           if (price === 999) {
             reachInMonth = 20000;
             reachPerDay = 667;
@@ -161,15 +166,17 @@ const PlanSelectorButtons: React.FC<PlanSelectorButtonsProps> = ({
           } else if (price === 9999) {
             reachInMonth = 200000;
             reachPerDay = 6667;
-          } else {
-            price = 1499;
-            reachInMonth = 30000;
-            reachPerDay = 1000;
           }
           bonus = 0;
           break;
           
         case "silver":
+          // Set default values first
+          price = 19999;
+          reachInMonth = 440000;
+          reachPerDay = 15000;
+          
+          // Use the values from the image
           if (price === 19999) {
             reachInMonth = 440000;
             reachPerDay = 15000;
@@ -182,15 +189,17 @@ const PlanSelectorButtons: React.FC<PlanSelectorButtonsProps> = ({
           } else if (price === 49999) {
             reachInMonth = 1100000;
             reachPerDay = 36666;
-          } else {
-            price = 19999;
-            reachInMonth = 440000;
-            reachPerDay = 15000;
           }
           bonus = 0.1; // 10% bonus
           break;
           
         case "gold":
+          // Set default values first
+          price = 99999;
+          reachInMonth = 2300000;
+          reachPerDay = 76666;
+          
+          // Use the values from the image
           if (price === 99999) {
             reachInMonth = 2300000;
             reachPerDay = 76666;
@@ -206,15 +215,17 @@ const PlanSelectorButtons: React.FC<PlanSelectorButtonsProps> = ({
           } else if (price === 499999) {
             reachInMonth = 11500000;
             reachPerDay = 383333;
-          } else {
-            price = 99999;
-            reachInMonth = 2300000;
-            reachPerDay = 76666;
           }
           bonus = 0.15; // 15% bonus
           break;
           
         case "platinum":
+          // Set default values first
+          price = 999999;
+          reachInMonth = 23000000;
+          reachPerDay = 800000;
+          
+          // Use the values from the image
           if (price === 999999) {
             reachInMonth = 23000000;
             reachPerDay = 800000;
@@ -227,68 +238,13 @@ const PlanSelectorButtons: React.FC<PlanSelectorButtonsProps> = ({
           } else if (price === 2499999) {
             reachInMonth = 57500000;
             reachPerDay = 2000000;
-          } else {
-            price = 999999;
-            reachInMonth = 23000000;
-            reachPerDay = 800000;
           }
           bonus = 0.2; // 20% bonus
           break;
       }
     }
     
-    // Default prices if not matched in switch statements
-    if (price === 0) {
-      if (isVideo) {
-        switch (tier) {
-          case "basic":
-            price = 1499;
-            reachInMonth = 15000;
-            reachPerDay = 500;
-            break;
-          case "silver":
-            price = 19999;
-            reachInMonth = 220000;
-            reachPerDay = 7500;
-            break;
-          case "gold":
-            price = 99999;
-            reachInMonth = 1150000;
-            reachPerDay = 38333;
-            break;
-          case "platinum":
-            price = 999999;
-            reachInMonth = 12000000;
-            reachPerDay = 400000;
-            break;
-        }
-      } else {
-        switch (tier) {
-          case "basic":
-            price = 1499;
-            reachInMonth = 30000;
-            reachPerDay = 1000;
-            break;
-          case "silver":
-            price = 19999;
-            reachInMonth = 440000;
-            reachPerDay = 15000;
-            break;
-          case "gold":
-            price = 99999;
-            reachInMonth = 2300000;
-            reachPerDay = 76666;
-            break;
-          case "platinum":
-            price = 999999;
-            reachInMonth = 23000000;
-            reachPerDay = 800000;
-            break;
-        }
-      }
-    }
-    
-    return { tier, price, reachInMonth, reachPerDay, bonus };
+    return { tier, label: tier.charAt(0).toUpperCase() + tier.slice(1), price, reachInMonth, reachPerDay, bonus };
   };
 
   const handlePlanSelect = () => {
@@ -298,7 +254,7 @@ const PlanSelectorButtons: React.FC<PlanSelectorButtonsProps> = ({
       // Create the plan object with the correct type
       const plan: Plan = {
         tier: selectedTier,
-        label: selectedTier.charAt(0).toUpperCase() + selectedTier.slice(1),
+        label: planInfo.label,
         price: planInfo.price,
         bonus: planInfo.bonus,
         reachInMonth: planInfo.reachInMonth,
@@ -438,6 +394,13 @@ const PlanSelectorButtons: React.FC<PlanSelectorButtonsProps> = ({
                     </li>
                   )}
                 </ul>
+              </div>
+              
+              <div className="bg-green-50 dark:bg-green-900/20 p-3 rounded-lg border border-green-100 dark:border-green-800">
+                <div className="text-sm font-medium text-green-700 dark:text-green-400">Special Offer</div>
+                <p className="text-sm mt-1">
+                  Book a 3-month campaign and get 1 month free!
+                </p>
               </div>
             </div>
           )}
