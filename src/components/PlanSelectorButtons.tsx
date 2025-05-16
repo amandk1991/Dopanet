@@ -11,6 +11,8 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { cn } from "@/lib/utils";
 
 interface PlanSelectorButtonsProps {
   onPlanSelect: (plan: Plan) => void;
@@ -27,177 +29,224 @@ const PlanSelectorButtons: React.FC<PlanSelectorButtonsProps> = ({
 }) => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedTier, setSelectedTier] = useState<"basic" | "silver" | "gold" | "platinum" | null>(null);
-
-  const openPlanDialog = (tier: "basic" | "silver" | "gold" | "platinum") => {
-    setSelectedTier(tier);
-    setDialogOpen(true);
+  
+  // Banner Plans (5 seconds) - All values match the image data exactly
+  const bannerPlans = {
+    basic: [
+      { tier: "basic", label: "Basic", bonus: 0, price: 999, reachInMonth: 20000, reachPerDay: 660 },
+      { tier: "basic", label: "Basic", bonus: 0, price: 1499, reachInMonth: 30000, reachPerDay: 1000 },
+      { tier: "basic", label: "Basic", bonus: 0, price: 1999, reachInMonth: 40000, reachPerDay: 1335 },
+      { tier: "basic", label: "Basic", bonus: 0, price: 2999, reachInMonth: 60000, reachPerDay: 2000 },
+      { tier: "basic", label: "Basic", bonus: 0, price: 4999, reachInMonth: 100000, reachPerDay: 3335 },
+      { tier: "basic", label: "Basic", bonus: 0, price: 9999, reachInMonth: 200000, reachPerDay: 6667 }
+    ],
+    silver: [
+      { tier: "silver", label: "Silver", bonus: 0.10, price: 19999, reachInMonth: 440000, reachPerDay: 15000 },
+      { tier: "silver", label: "Silver", bonus: 0.10, price: 29999, reachInMonth: 660000, reachPerDay: 22000 },
+      { tier: "silver", label: "Silver", bonus: 0.10, price: 39999, reachInMonth: 880000, reachPerDay: 29333 },
+      { tier: "silver", label: "Silver", bonus: 0.10, price: 49999, reachInMonth: 1100000, reachPerDay: 36666 }
+    ],
+    gold: [
+      { tier: "gold", label: "Gold", bonus: 0.15, price: 99999, reachInMonth: 2300000, reachPerDay: 76666 },
+      { tier: "gold", label: "Gold", bonus: 0.15, price: 199999, reachInMonth: 4600000, reachPerDay: 153333 },
+      { tier: "gold", label: "Gold", bonus: 0.15, price: 299999, reachInMonth: 6900000, reachPerDay: 230000 },
+      { tier: "gold", label: "Gold", bonus: 0.15, price: 399999, reachInMonth: 9000000, reachPerDay: 306666 },
+      { tier: "gold", label: "Gold", bonus: 0.15, price: 499999, reachInMonth: 11500000, reachPerDay: 383333 }
+    ],
+    platinum: [
+      { tier: "platinum", label: "Platinum", bonus: 0.20, price: 999999, reachInMonth: 24000000, reachPerDay: 800000 },
+      { tier: "platinum", label: "Platinum", bonus: 0.20, price: 1499999, reachInMonth: 36000000, reachPerDay: 1200000 },
+      { tier: "platinum", label: "Platinum", bonus: 0.20, price: 1999999, reachInMonth: 48000000, reachPerDay: 1600000 },
+      { tier: "platinum", label: "Platinum", bonus: 0.20, price: 2499999, reachInMonth: 60000000, reachPerDay: 2000000 }
+    ]
   };
 
-  // Updated to match the exact values from the images
-  const getPlans = (adType: string, tier: "basic" | "silver" | "gold" | "platinum") => {
-    const isVideo = adType === "video";
-    
-    let price = 0;
-    let reachInMonth = 0;
-    let reachPerDay = 0;
-    let bonus = 0;
-    
-    if (isVideo) {
-      // Video ads (10 seconds) - 100 ₹ CPM
-      switch (tier) {
-        case "basic":
-          price = 1999; // Default middle value
-          reachInMonth = 20000;
-          reachPerDay = 667;
-          bonus = 0;
-          break;
-          
-        case "silver":
-          price = 29999; // Default middle value
-          reachInMonth = 330000; // 300,000 + 30,000 (10% bonus)
-          reachPerDay = 11000;
-          bonus = 0.1; // 10% bonus
-          break;
-          
-        case "gold":
-          price = 299999; // Default middle value
-          reachInMonth = 3450000; // 3,000,000 + 450,000 (15% bonus)
-          reachPerDay = 115000;
-          bonus = 0.15; // 15% bonus
-          break;
-          
-        case "platinum":
-          price = 1999999; // Default middle value
-          reachInMonth = 24000000; // 20,000,000 + 4,000,000 (20% bonus)
-          reachPerDay = 800000;
-          bonus = 0.2; // 20% bonus
-          break;
-      }
-    } else {
-      // Banner ads (5 seconds) - 50 ₹ CPM
-      switch (tier) {
-        case "basic":
-          price = 1999; // Default middle value
-          reachInMonth = 40000;
-          reachPerDay = 1335;
-          bonus = 0;
-          break;
-          
-        case "silver":
-          price = 29999; // Default middle value
-          reachInMonth = 660000; // 600,000 + 60,000 (10% bonus)
-          reachPerDay = 22000;
-          bonus = 0.1; // 10% bonus
-          break;
-          
-        case "gold":
-          price = 299999; // Default middle value
-          reachInMonth = 6900000; // 6,000,000 + 900,000 (15% bonus)
-          reachPerDay = 230000;
-          bonus = 0.15; // 15% bonus
-          break;
-          
-        case "platinum":
-          price = 1999999; // Default middle value
-          reachInMonth = 48000000; // 40,000,000 + 8,000,000 (20% bonus)
-          reachPerDay = 1600000;
-          bonus = 0.2; // 20% bonus
-          break;
-      }
-    }
-    
-    return { tier, label: tier.charAt(0).toUpperCase() + tier.slice(1), price, reachInMonth, reachPerDay, bonus, adType };
+  // Video Plans (10 seconds) - All values match the image data exactly
+  const videoPlans = {
+    basic: [
+      { tier: "basic", label: "Basic", bonus: 0, price: 999, reachInMonth: 10000, reachPerDay: 330 },
+      { tier: "basic", label: "Basic", bonus: 0, price: 1499, reachInMonth: 15000, reachPerDay: 500 },
+      { tier: "basic", label: "Basic", bonus: 0, price: 1999, reachInMonth: 20000, reachPerDay: 667 },
+      { tier: "basic", label: "Basic", bonus: 0, price: 2999, reachInMonth: 30000, reachPerDay: 1000 },
+      { tier: "basic", label: "Basic", bonus: 0, price: 4999, reachInMonth: 50000, reachPerDay: 1668 },
+      { tier: "basic", label: "Basic", bonus: 0, price: 9999, reachInMonth: 100000, reachPerDay: 3334 }
+    ],
+    silver: [
+      { tier: "silver", label: "Silver", bonus: 0.10, price: 19999, reachInMonth: 220000, reachPerDay: 7500 },
+      { tier: "silver", label: "Silver", bonus: 0.10, price: 29999, reachInMonth: 330000, reachPerDay: 11000 },
+      { tier: "silver", label: "Silver", bonus: 0.10, price: 39999, reachInMonth: 440000, reachPerDay: 14667 },
+      { tier: "silver", label: "Silver", bonus: 0.10, price: 49999, reachInMonth: 550000, reachPerDay: 18333 }
+    ],
+    gold: [
+      { tier: "gold", label: "Gold", bonus: 0.15, price: 99999, reachInMonth: 1150000, reachPerDay: 38333 },
+      { tier: "gold", label: "Gold", bonus: 0.15, price: 199999, reachInMonth: 2300000, reachPerDay: 76667 },
+      { tier: "gold", label: "Gold", bonus: 0.15, price: 299999, reachInMonth: 3450000, reachPerDay: 115000 },
+      { tier: "gold", label: "Gold", bonus: 0.15, price: 399999, reachInMonth: 4600000, reachPerDay: 153333 },
+      { tier: "gold", label: "Gold", bonus: 0.15, price: 499999, reachInMonth: 5750000, reachPerDay: 191667 }
+    ],
+    platinum: [
+      { tier: "platinum", label: "Platinum", bonus: 0.20, price: 999999, reachInMonth: 12000000, reachPerDay: 400000 },
+      { tier: "platinum", label: "Platinum", bonus: 0.20, price: 1499999, reachInMonth: 18000000, reachPerDay: 600000 },
+      { tier: "platinum", label: "Platinum", bonus: 0.20, price: 1999999, reachInMonth: 24000000, reachPerDay: 800000 },
+      { tier: "platinum", label: "Platinum", bonus: 0.20, price: 2499999, reachInMonth: 30000000, reachPerDay: 1000000 }
+    ]
   };
 
-  const handlePlanSelect = () => {
-    if (selectedTier) {
-      const planInfo = getPlans(currentAdType, selectedTier);
-      
-      // Create the plan object with the correct type
-      const plan: Plan = {
-        tier: selectedTier,
-        label: planInfo.label,
-        price: planInfo.price,
-        bonus: planInfo.bonus,
-        reachInMonth: planInfo.reachInMonth,
-        reachPerDay: planInfo.reachPerDay,
-        adType: currentAdType
-      };
-      
-      onPlanSelect(plan);
-      setSelectedCategory(selectedTier);
-      setDialogOpen(false);
-    }
-  };
-
-  // Direct plan selection without dialog for each button
-  const handleDirectPlanSelect = (tier: "basic" | "silver" | "gold" | "platinum") => {
-    const planInfo = getPlans(currentAdType, tier);
-    
-    // Create the plan object with the correct type
-    const plan: Plan = {
-      tier: tier,
-      label: planInfo.label,
-      price: planInfo.price,
-      bonus: planInfo.bonus,
-      reachInMonth: planInfo.reachInMonth,
-      reachPerDay: planInfo.reachPerDay,
+  const handlePlanSelection = (plan: Plan) => {
+    // Ensure the plan has the ad type
+    const updatedPlan = {
+      ...plan,
       adType: currentAdType
     };
     
-    onPlanSelect(plan);
-    setSelectedCategory(tier);
+    onPlanSelect(updatedPlan);
+    setSelectedCategory(plan.tier);
+  };
+
+  const renderPlanCards = (plans: any[], tier: string) => {
+    const tierColors: Record<string, string> = {
+      basic: "bg-blue-100 dark:bg-blue-900/30 border-blue-200 dark:border-blue-800",
+      silver: "bg-gray-100 dark:bg-gray-800/50 border-gray-300 dark:border-gray-700",
+      gold: "bg-yellow-50 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-800/50",
+      platinum: "bg-purple-50 dark:bg-purple-900/20 border-purple-200 dark:border-purple-800/50"
+    };
+    
+    const tierTextColors: Record<string, string> = {
+      basic: "text-blue-700 dark:text-blue-300",
+      silver: "text-gray-700 dark:text-gray-300",
+      gold: "text-yellow-700 dark:text-yellow-500",
+      platinum: "text-purple-700 dark:text-purple-400"
+    };
+
+    return (
+      <div className="grid grid-cols-1 gap-3 max-h-[60vh] overflow-y-auto p-3">
+        {plans.map((plan, index) => (
+          <div 
+            key={`${tier}-${index}-${plan.price}`}
+            className={cn(
+              "border rounded-lg p-3 cursor-pointer transition-all hover:scale-105",
+              tierColors[tier as keyof typeof tierColors]
+            )}
+            onClick={() => handlePlanSelection(plan as Plan)}
+          >
+            <div className={cn("font-bold text-lg mb-1", tierTextColors[tier as keyof typeof tierTextColors])}>
+              ₹{plan.price.toLocaleString()}
+            </div>
+            <div className="space-y-1 text-sm">
+              <div className="flex justify-between">
+                <span>Reach in a Month:</span>
+                <span className="font-semibold">{plan.reachInMonth.toLocaleString()}</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Reach Per Day:</span>
+                <span className="font-semibold">{plan.reachPerDay.toLocaleString()}</span>
+              </div>
+              <div className="flex justify-between text-gray-500 dark:text-gray-400">
+                <span>Min Duration:</span>
+                <span>{currentAdType === "banner" ? "5 seconds" : "10 seconds"}</span>
+              </div>
+              
+              {tier !== "basic" && (
+                <div className="mt-1 text-xs text-green-600 dark:text-green-400">
+                  +{(plan.bonus * 100).toFixed(0)}% bonus reach included
+                </div>
+              )}
+              
+              <div className="mt-1 text-xs text-blue-600 dark:text-blue-400">
+                Book 3 months, get 1 month free!
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    );
   };
 
   return (
-    <>
+    <div className="space-y-4">
       <div className="flex flex-wrap gap-2">
-        <Button 
-          onClick={() => {
-            openPlanDialog("basic");
-            handleDirectPlanSelect("basic");
-          }}
-          variant={selectedCategory === "basic" ? "default" : "outline"}
-          className={selectedCategory === "basic" ? "bg-blue-500 hover:bg-blue-600 text-white" : ""}
-        >
-          Basic Plans
-        </Button>
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button 
+              variant={selectedCategory === "basic" ? "default" : "outline"}
+              className={selectedCategory === "basic" ? "bg-blue-500 hover:bg-blue-600 text-white" : ""}
+            >
+              Basic Plans
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-96 p-0" side="bottom" align="start">
+            <div className="p-2 bg-blue-500 text-white font-medium">
+              Basic Plans - {currentAdType === "banner" ? "Banner Ads (5s)" : "Video Ads (10s)"}
+            </div>
+            {renderPlanCards(
+              currentAdType === "banner" ? bannerPlans.basic : videoPlans.basic, 
+              "basic"
+            )}
+          </PopoverContent>
+        </Popover>
         
-        <Button 
-          onClick={() => {
-            openPlanDialog("silver");
-            handleDirectPlanSelect("silver");
-          }}
-          variant={selectedCategory === "silver" ? "default" : "outline"}
-          className={selectedCategory === "silver" ? "bg-gray-400 hover:bg-gray-500 text-white" : ""}
-        >
-          Silver Plans
-          <Badge className="ml-2 bg-gray-500">+10%</Badge>
-        </Button>
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button 
+              variant={selectedCategory === "silver" ? "default" : "outline"}
+              className={selectedCategory === "silver" ? "bg-gray-400 hover:bg-gray-500 text-white" : ""}
+            >
+              Silver Plans
+              <Badge className="ml-2 bg-gray-500">+10%</Badge>
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-96 p-0" side="bottom" align="start">
+            <div className="p-2 bg-gray-500 text-white font-medium">
+              Silver Plans (+10%) - {currentAdType === "banner" ? "Banner Ads (5s)" : "Video Ads (10s)"}
+            </div>
+            {renderPlanCards(
+              currentAdType === "banner" ? bannerPlans.silver : videoPlans.silver, 
+              "silver"
+            )}
+          </PopoverContent>
+        </Popover>
         
-        <Button 
-          onClick={() => {
-            openPlanDialog("gold");
-            handleDirectPlanSelect("gold");
-          }}
-          variant={selectedCategory === "gold" ? "default" : "outline"}
-          className={selectedCategory === "gold" ? "bg-yellow-500 hover:bg-yellow-600 text-white" : ""}
-        >
-          Gold Plans
-          <Badge className="ml-2 bg-yellow-600">+15%</Badge>
-        </Button>
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button 
+              variant={selectedCategory === "gold" ? "default" : "outline"}
+              className={selectedCategory === "gold" ? "bg-yellow-500 hover:bg-yellow-600 text-white" : ""}
+            >
+              Gold Plans
+              <Badge className="ml-2 bg-yellow-600">+15%</Badge>
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-96 p-0" side="bottom" align="start">
+            <div className="p-2 bg-yellow-500 text-white font-medium">
+              Gold Plans (+15%) - {currentAdType === "banner" ? "Banner Ads (5s)" : "Video Ads (10s)"}
+            </div>
+            {renderPlanCards(
+              currentAdType === "banner" ? bannerPlans.gold : videoPlans.gold, 
+              "gold"
+            )}
+          </PopoverContent>
+        </Popover>
         
-        <Button 
-          onClick={() => {
-            openPlanDialog("platinum");
-            handleDirectPlanSelect("platinum");
-          }}
-          variant={selectedCategory === "platinum" ? "default" : "outline"}
-          className={selectedCategory === "platinum" ? "bg-purple-500 hover:bg-purple-600 text-white" : ""}
-        >
-          Platinum Plans
-          <Badge className="ml-2 bg-purple-600">+20%</Badge>
-        </Button>
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button 
+              variant={selectedCategory === "platinum" ? "default" : "outline"}
+              className={selectedCategory === "platinum" ? "bg-purple-500 hover:bg-purple-600 text-white" : ""}
+            >
+              Platinum Plans
+              <Badge className="ml-2 bg-purple-600">+20%</Badge>
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-96 p-0" side="bottom" align="start">
+            <div className="p-2 bg-purple-500 text-white font-medium">
+              Platinum Plans (+20%) - {currentAdType === "banner" ? "Banner Ads (5s)" : "Video Ads (10s)"}
+            </div>
+            {renderPlanCards(
+              currentAdType === "banner" ? bannerPlans.platinum : videoPlans.platinum, 
+              "platinum"
+            )}
+          </PopoverContent>
+        </Popover>
       </div>
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
@@ -206,116 +255,13 @@ const PlanSelectorButtons: React.FC<PlanSelectorButtonsProps> = ({
             <DialogTitle className="text-xl font-bold capitalize">
               {selectedTier} Plan Details
             </DialogTitle>
-            <DialogDescription>
-              {selectedTier === "basic" ? (
-                "Our entry-level plan for businesses just starting with digital advertising"
-              ) : selectedTier === "silver" ? (
-                "Enhanced visibility with 10% bonus reach for growing businesses"
-              ) : selectedTier === "gold" ? (
-                "Premium plan with 15% bonus reach for established businesses"
-              ) : (
-                "Our top-tier plan with 20% bonus reach for maximum brand exposure"
-              )}
-            </DialogDescription>
           </DialogHeader>
-
-          {selectedTier && (
-            <div className="space-y-4 py-2">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                  <div className="text-sm text-gray-500 dark:text-gray-400">Price</div>
-                  <div className="text-xl font-bold">
-                    ₹{getPlans(currentAdType, selectedTier).price.toLocaleString()}
-                  </div>
-                </div>
-                
-                <div className="p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                  <div className="text-sm text-gray-500 dark:text-gray-400">Ad Type</div>
-                  <div className="text-xl font-bold capitalize">
-                    {currentAdType} Ad
-                  </div>
-                </div>
-              </div>
-              
-              <div className="p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                <div className="text-sm text-gray-500 dark:text-gray-400">Monthly Reach</div>
-                <div className="text-xl font-bold">
-                  {getPlans(currentAdType, selectedTier).reachInMonth.toLocaleString()}
-                  {selectedTier !== "basic" && (
-                    <span className="text-sm text-green-500 ml-2">
-                      (includes {getPlans(currentAdType, selectedTier).bonus * 100}% bonus)
-                    </span>
-                  )}
-                </div>
-              </div>
-              
-              <div className="p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                <div className="text-sm text-gray-500 dark:text-gray-400">Daily Reach</div>
-                <div className="text-xl font-bold">
-                  {getPlans(currentAdType, selectedTier).reachPerDay.toLocaleString()}
-                </div>
-              </div>
-              
-              <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg border border-blue-100 dark:border-blue-800">
-                <div className="text-sm font-medium">Key Benefits</div>
-                <ul className="text-sm mt-2 space-y-1">
-                  <li className="flex items-center gap-2">
-                    <div className="h-1.5 w-1.5 rounded-full bg-green-500"></div>
-                    <span>30-day campaign duration</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <div className="h-1.5 w-1.5 rounded-full bg-green-500"></div>
-                    <span>Access to all targeting options</span>
-                  </li>
-                  {selectedTier !== "basic" && (
-                    <li className="flex items-center gap-2">
-                      <div className="h-1.5 w-1.5 rounded-full bg-green-500"></div>
-                      <span>
-                        {getPlans(currentAdType, selectedTier).bonus * 100}% bonus reach
-                      </span>
-                    </li>
-                  )}
-                  {selectedTier === "gold" || selectedTier === "platinum" ? (
-                    <li className="flex items-center gap-2">
-                      <div className="h-1.5 w-1.5 rounded-full bg-green-500"></div>
-                      <span>Priority technical support</span>
-                    </li>
-                  ) : null}
-                  {selectedTier === "platinum" && (
-                    <li className="flex items-center gap-2">
-                      <div className="h-1.5 w-1.5 rounded-full bg-green-500"></div>
-                      <span>Ad design assistance</span>
-                    </li>
-                  )}
-                </ul>
-              </div>
-              
-              <div className="bg-green-50 dark:bg-green-900/20 p-3 rounded-lg border border-green-100 dark:border-green-800">
-                <div className="text-sm font-medium text-green-700 dark:text-green-400">Special Offer</div>
-                <p className="text-sm mt-1">
-                  Book a 3-month campaign and get 1 month free!
-                </p>
-              </div>
-            </div>
-          )}
-
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDialogOpen(false)}>Cancel</Button>
-            <Button 
-              onClick={handlePlanSelect}
-              className={
-                selectedTier === "basic" ? "bg-blue-500 hover:bg-blue-600 text-white" : 
-                selectedTier === "silver" ? "bg-gray-400 hover:bg-gray-500 text-white" :
-                selectedTier === "gold" ? "bg-yellow-500 hover:bg-yellow-600 text-white" :
-                "bg-purple-500 hover:bg-purple-600 text-white"
-              }
-            >
-              Select Plan
-            </Button>
+            <Button variant="outline" onClick={() => setDialogOpen(false)}>Close</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </>
+    </div>
   );
 };
 
