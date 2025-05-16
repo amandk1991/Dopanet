@@ -20,8 +20,8 @@ const OfferPopup: React.FC<OfferPopupProps> = ({ isOpen, setIsOpen }) => {
   const offers = [
     {
       months: 3,
-      freeMonths: 2,
-      discount: "40%",
+      freeMonths: 1,
+      discount: "25%",
       color: "bg-blue-100 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800",
       badge: "bg-blue-500 text-white",
       textColor: "text-blue-700 dark:text-blue-400"

@@ -5,6 +5,8 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import emailjs from '@emailjs/browser';
 
 const ContactForm: React.FC = () => {
   const { toast } = useToast();
@@ -22,17 +24,31 @@ const ContactForm: React.FC = () => {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
     
-    // Simulate form submission
-    setTimeout(() => {
+    try {
+      // Send email using EmailJS
+      await emailjs.send(
+        "service_id", // Replace with your service ID when provided
+        "template_id", // Replace with your template ID when provided
+        {
+          from_name: formData.name,
+          email: formData.email,
+          business_name: formData.businessName,
+          budget: formData.budget,
+          message: formData.message,
+          reply_to: formData.email,
+        },
+        "your_public_key" // Replace with your public key when provided
+      );
+
       toast({
         title: "Form submitted successfully!",
         description: "We'll contact you soon about your demo.",
       });
-      setLoading(false);
+      
       setFormData({
         name: "",
         email: "",
@@ -40,7 +56,16 @@ const ContactForm: React.FC = () => {
         budget: "",
         message: ""
       });
-    }, 1500);
+    } catch (error) {
+      console.error("Error sending email:", error);
+      toast({
+        title: "Error submitting form",
+        description: "Please try again or contact us directly.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -62,86 +87,88 @@ const ContactForm: React.FC = () => {
             <div className="glass-card p-8 relative overflow-hidden">
               <div className="absolute -top-20 -left-20 h-40 w-40 bg-dopanet-100 dark:bg-dopanet-900/30 rounded-full mix-blend-multiply filter blur-2xl"></div>
               
-              <div className="relative">
-                <h3 className="text-2xl font-bold mb-6 text-gray-900 dark:text-white">
-                  Book a Free Demo (₹0)
-                </h3>
-                
-                <form onSubmit={handleSubmit} className="space-y-6">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="space-y-2">
-                      <Label htmlFor="name">Full Name</Label>
-                      <Input
-                        id="name"
-                        name="name"
-                        placeholder="John Doe"
-                        value={formData.name}
-                        onChange={handleInputChange}
-                        required
-                      />
+              <ScrollArea className="h-[600px] md:h-auto">
+                <div className="relative p-1">
+                  <h3 className="text-2xl font-bold mb-6 text-gray-900 dark:text-white">
+                    Book a Free Demo (₹0)
+                  </h3>
+                  
+                  <form onSubmit={handleSubmit} className="space-y-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div className="space-y-2">
+                        <Label htmlFor="name">Full Name</Label>
+                        <Input
+                          id="name"
+                          name="name"
+                          placeholder="John Doe"
+                          value={formData.name}
+                          onChange={handleInputChange}
+                          required
+                        />
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <Label htmlFor="email">Email</Label>
+                        <Input
+                          id="email"
+                          name="email"
+                          type="email"
+                          placeholder="john@example.com"
+                          value={formData.email}
+                          onChange={handleInputChange}
+                          required
+                        />
+                      </div>
+                    </div>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div className="space-y-2">
+                        <Label htmlFor="businessName">Business Name</Label>
+                        <Input
+                          id="businessName"
+                          name="businessName"
+                          placeholder="Your Business"
+                          value={formData.businessName}
+                          onChange={handleInputChange}
+                          required
+                        />
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <Label htmlFor="budget">Approximate Budget (in ₹)</Label>
+                        <Input
+                          id="budget"
+                          name="budget"
+                          placeholder="5000"
+                          value={formData.budget}
+                          onChange={handleInputChange}
+                          required
+                        />
+                      </div>
                     </div>
                     
                     <div className="space-y-2">
-                      <Label htmlFor="email">Email</Label>
-                      <Input
-                        id="email"
-                        name="email"
-                        type="email"
-                        placeholder="john@example.com"
-                        value={formData.email}
+                      <Label htmlFor="message">Message (Optional)</Label>
+                      <Textarea
+                        id="message"
+                        name="message"
+                        placeholder="Tell us more about your business and advertising goals..."
+                        value={formData.message}
                         onChange={handleInputChange}
-                        required
-                      />
-                    </div>
-                  </div>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="space-y-2">
-                      <Label htmlFor="businessName">Business Name</Label>
-                      <Input
-                        id="businessName"
-                        name="businessName"
-                        placeholder="Your Business"
-                        value={formData.businessName}
-                        onChange={handleInputChange}
-                        required
+                        rows={4}
                       />
                     </div>
                     
-                    <div className="space-y-2">
-                      <Label htmlFor="budget">Approximate Budget (in ₹)</Label>
-                      <Input
-                        id="budget"
-                        name="budget"
-                        placeholder="5000"
-                        value={formData.budget}
-                        onChange={handleInputChange}
-                        required
-                      />
-                    </div>
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="message">Message (Optional)</Label>
-                    <Textarea
-                      id="message"
-                      name="message"
-                      placeholder="Tell us more about your business and advertising goals..."
-                      value={formData.message}
-                      onChange={handleInputChange}
-                      rows={4}
-                    />
-                  </div>
-                  
-                  <Button 
-                    type="submit" 
-                    className="w-full bg-gradient-to-r from-dopanet-500 to-teal-500 hover:from-dopanet-600 hover:to-teal-600 text-white"
-                    disabled={loading}
-                  >
-                    {loading ? "Submitting..." : "Book Your Free Demo"}
-                  </Button>
-                </form>
-              </div>
+                    <Button 
+                      type="submit" 
+                      className="w-full bg-gradient-to-r from-dopanet-500 to-teal-500 hover:from-dopanet-600 hover:to-teal-600 text-white"
+                      disabled={loading}
+                    >
+                      {loading ? "Submitting..." : "Book Your Free Demo"}
+                    </Button>
+                  </form>
+                </div>
+              </ScrollArea>
             </div>
           </div>
           
