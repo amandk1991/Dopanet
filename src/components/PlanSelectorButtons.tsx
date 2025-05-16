@@ -130,11 +130,33 @@ const PlanSelectorButtons: React.FC<PlanSelectorButtonsProps> = ({
     }
   };
 
+  // Direct plan selection without dialog for each button
+  const handleDirectPlanSelect = (tier: "basic" | "silver" | "gold" | "platinum") => {
+    const planInfo = getPlans(currentAdType, tier);
+    
+    // Create the plan object with the correct type
+    const plan: Plan = {
+      tier: tier,
+      label: planInfo.label,
+      price: planInfo.price,
+      bonus: planInfo.bonus,
+      reachInMonth: planInfo.reachInMonth,
+      reachPerDay: planInfo.reachPerDay,
+      adType: currentAdType
+    };
+    
+    onPlanSelect(plan);
+    setSelectedCategory(tier);
+  };
+
   return (
     <>
       <div className="flex flex-wrap gap-2">
         <Button 
-          onClick={() => openPlanDialog("basic")} 
+          onClick={() => {
+            openPlanDialog("basic");
+            handleDirectPlanSelect("basic");
+          }}
           variant={selectedCategory === "basic" ? "default" : "outline"}
           className={selectedCategory === "basic" ? "bg-blue-500 hover:bg-blue-600 text-white" : ""}
         >
@@ -142,7 +164,10 @@ const PlanSelectorButtons: React.FC<PlanSelectorButtonsProps> = ({
         </Button>
         
         <Button 
-          onClick={() => openPlanDialog("silver")} 
+          onClick={() => {
+            openPlanDialog("silver");
+            handleDirectPlanSelect("silver");
+          }}
           variant={selectedCategory === "silver" ? "default" : "outline"}
           className={selectedCategory === "silver" ? "bg-gray-400 hover:bg-gray-500 text-white" : ""}
         >
@@ -151,7 +176,10 @@ const PlanSelectorButtons: React.FC<PlanSelectorButtonsProps> = ({
         </Button>
         
         <Button 
-          onClick={() => openPlanDialog("gold")} 
+          onClick={() => {
+            openPlanDialog("gold");
+            handleDirectPlanSelect("gold");
+          }}
           variant={selectedCategory === "gold" ? "default" : "outline"}
           className={selectedCategory === "gold" ? "bg-yellow-500 hover:bg-yellow-600 text-white" : ""}
         >
@@ -160,7 +188,10 @@ const PlanSelectorButtons: React.FC<PlanSelectorButtonsProps> = ({
         </Button>
         
         <Button 
-          onClick={() => openPlanDialog("platinum")} 
+          onClick={() => {
+            openPlanDialog("platinum");
+            handleDirectPlanSelect("platinum");
+          }}
           variant={selectedCategory === "platinum" ? "default" : "outline"}
           className={selectedCategory === "platinum" ? "bg-purple-500 hover:bg-purple-600 text-white" : ""}
         >
