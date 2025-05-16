@@ -47,10 +47,10 @@ interface PlanSelectorProps {
 const PlanSelector: React.FC<PlanSelectorProps> = ({ isOpen, setIsOpen, onSelectPlan, currentAdType }) => {
   const [selectedTab, setSelectedTab] = useState<"banner" | "video">(currentAdType === "video" ? "video" : "banner");
   
-  // Banner Plans (5 seconds) as shown in the image
+  // Banner Plans (5 seconds) - Updated based on the image data
   const bannerPlans: BannerPlans = {
     basic: [
-      { tier: "basic", label: "Basic", bonus: 0, price: 999, reachInMonth: 20000, reachPerDay: 667 },
+      { tier: "basic", label: "Basic", bonus: 0, price: 999, reachInMonth: 20000, reachPerDay: 660 },
       { tier: "basic", label: "Basic", bonus: 0, price: 1499, reachInMonth: 30000, reachPerDay: 1000 },
       { tier: "basic", label: "Basic", bonus: 0, price: 1999, reachInMonth: 40000, reachPerDay: 1335 },
       { tier: "basic", label: "Basic", bonus: 0, price: 2999, reachInMonth: 60000, reachPerDay: 2000 },
@@ -67,25 +67,25 @@ const PlanSelector: React.FC<PlanSelectorProps> = ({ isOpen, setIsOpen, onSelect
       { tier: "gold", label: "Gold", bonus: 0.15, price: 99999, reachInMonth: 2300000, reachPerDay: 76666 },
       { tier: "gold", label: "Gold", bonus: 0.15, price: 199999, reachInMonth: 4600000, reachPerDay: 153333 },
       { tier: "gold", label: "Gold", bonus: 0.15, price: 299999, reachInMonth: 6900000, reachPerDay: 230000 },
-      { tier: "gold", label: "Gold", bonus: 0.15, price: 399999, reachInMonth: 9200000, reachPerDay: 306666 },
+      { tier: "gold", label: "Gold", bonus: 0.15, price: 399999, reachInMonth: 8000000, reachPerDay: 306666 },
       { tier: "gold", label: "Gold", bonus: 0.15, price: 499999, reachInMonth: 11500000, reachPerDay: 383333 }
     ],
     platinum: [
-      { tier: "platinum", label: "Platinum", bonus: 0.20, price: 999999, reachInMonth: 23000000, reachPerDay: 800000 },
-      { tier: "platinum", label: "Platinum", bonus: 0.20, price: 1499999, reachInMonth: 34500000, reachPerDay: 1200000 },
-      { tier: "platinum", label: "Platinum", bonus: 0.20, price: 1999999, reachInMonth: 46000000, reachPerDay: 1600000 },
-      { tier: "platinum", label: "Platinum", bonus: 0.20, price: 2499999, reachInMonth: 57500000, reachPerDay: 2000000 }
+      { tier: "platinum", label: "Platinum", bonus: 0.20, price: 999999, reachInMonth: 24000000, reachPerDay: 800000 },
+      { tier: "platinum", label: "Platinum", bonus: 0.20, price: 1499999, reachInMonth: 36000000, reachPerDay: 1200000 },
+      { tier: "platinum", label: "Platinum", bonus: 0.20, price: 1999999, reachInMonth: 48000000, reachPerDay: 1600000 },
+      { tier: "platinum", label: "Platinum", bonus: 0.20, price: 2499999, reachInMonth: 60000000, reachPerDay: 2000000 }
     ]
   };
 
-  // Video Plans (10 seconds) as shown in the image
+  // Video Plans (10 seconds) - Updated based on the image data
   const videoPlans: VideoPlans = {
     basic: [
-      { tier: "basic", label: "Basic", bonus: 0, price: 999, reachInMonth: 10000, reachPerDay: 333 },
+      { tier: "basic", label: "Basic", bonus: 0, price: 999, reachInMonth: 10000, reachPerDay: 330 },
       { tier: "basic", label: "Basic", bonus: 0, price: 1499, reachInMonth: 15000, reachPerDay: 500 },
       { tier: "basic", label: "Basic", bonus: 0, price: 1999, reachInMonth: 20000, reachPerDay: 667 },
       { tier: "basic", label: "Basic", bonus: 0, price: 2999, reachInMonth: 30000, reachPerDay: 1000 },
-      { tier: "basic", label: "Basic", bonus: 0, price: 4999, reachInMonth: 50000, reachPerDay: 1666 },
+      { tier: "basic", label: "Basic", bonus: 0, price: 4999, reachInMonth: 50000, reachPerDay: 1668 },
       { tier: "basic", label: "Basic", bonus: 0, price: 9999, reachInMonth: 100000, reachPerDay: 3334 }
     ],
     silver: [
