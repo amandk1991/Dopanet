@@ -48,10 +48,32 @@ const Index = () => {
             e.preventDefault();
             
             const delta = Math.sign(e.deltaY) * -1;
-            const currentValue = parseFloat((input as HTMLInputElement).value) || 0;
-            const step = parseFloat((input as HTMLInputElement).step) || 1;
+            const inputElement = input as HTMLInputElement;
+            const currentValue = parseFloat(inputElement.value) || 0;
+            const step = parseFloat(inputElement.step) || 1;
             
-            (input as HTMLInputElement).value = String(currentValue + (delta * step));
+            // Calculate new value
+            let newValue = currentValue + (delta * step);
+            
+            // Handle min and max values
+            const min = inputElement.min !== "" ? parseFloat(inputElement.min) : null;
+            const max = inputElement.max !== "" ? parseFloat(inputElement.max) : null;
+            
+            // Enforce minimum value of 0 for all number inputs
+            if (min !== null) {
+              newValue = Math.max(newValue, min);
+            } else {
+              newValue = Math.max(newValue, 0); // Default min to 0 if not specified
+            }
+            
+            // Enforce maximum value of 30 for campaign days
+            if (inputElement.id === "campaignDays" || inputElement.name === "campaignDays") {
+              newValue = Math.min(newValue, 30);
+            } else if (max !== null) {
+              newValue = Math.min(newValue, max);
+            }
+            
+            inputElement.value = String(newValue);
             
             // Trigger change event
             const event = new Event('input', { bubbles: true });

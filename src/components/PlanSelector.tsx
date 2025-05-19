@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import ScrollablePlans from "./ScrollablePlans";
 
 export interface Plan {
   tier: "basic" | "silver" | "gold" | "platinum";
@@ -138,54 +139,56 @@ const PlanSelector: React.FC<PlanSelectorProps> = ({ isOpen, setIsOpen, onSelect
             {tier.toUpperCase()} {tier !== "basic" && `(+${plans[0].bonus * 100}% Reach)`}
           </Badge>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
-          {plans.map((plan, index) => (
-            <div 
-              key={`${tier}-${index}`}
-              className={cn(
-                "border rounded-lg p-4 cursor-pointer transition-all hover:scale-105",
-                tierColors[tier]
-              )}
-              onClick={() => handlePlanSelection({...plan, adType: selectedTab})}
-            >
-              <div className={cn("font-bold text-xl mb-2", tierTextColors[tier])}>
-                ₹{plan.price.toLocaleString()}
-              </div>
-              <div className="space-y-1">
-                <div className="flex justify-between text-sm">
-                  <span>Reach in a Month:</span>
-                  <span className="font-semibold">{plan.reachInMonth.toLocaleString()}</span>
+        <ScrollablePlans maxHeight="300px">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
+            {plans.map((plan, index) => (
+              <div 
+                key={`${tier}-${index}`}
+                className={cn(
+                  "border rounded-lg p-4 cursor-pointer transition-all hover:scale-105",
+                  tierColors[tier]
+                )}
+                onClick={() => handlePlanSelection({...plan, adType: selectedTab})}
+              >
+                <div className={cn("font-bold text-xl mb-2", tierTextColors[tier])}>
+                  ₹{plan.price.toLocaleString()}
                 </div>
-                <div className="flex justify-between text-sm">
-                  <span>Reach Per Day:</span>
-                  <span className="font-semibold">{plan.reachPerDay.toLocaleString()}</span>
-                </div>
-                <div className="flex justify-between text-sm text-gray-500 dark:text-gray-400">
-                  <span>Min Duration:</span>
-                  <span>{selectedTab === "banner" ? "5 seconds" : "10 seconds"}</span>
-                </div>
-                <div className="flex justify-between text-sm text-gray-500 dark:text-gray-400">
-                  <span>Ad Type:</span>
-                  <span className="capitalize">{selectedTab}</span>
-                </div>
-              </div>
-              
-              {tier !== "basic" && (
-                <div className="mt-2 border-t border-gray-200 dark:border-gray-700 pt-2">
-                  <div className="text-xs text-green-600 dark:text-green-400 font-medium">
-                    +{plan.bonus * 100}% bonus reach included
+                <div className="space-y-1">
+                  <div className="flex justify-between text-sm">
+                    <span>Reach in a Month:</span>
+                    <span className="font-semibold">{plan.reachInMonth.toLocaleString()}</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span>Reach Per Day:</span>
+                    <span className="font-semibold">{plan.reachPerDay.toLocaleString()}</span>
+                  </div>
+                  <div className="flex justify-between text-sm text-gray-500 dark:text-gray-400">
+                    <span>Min Duration:</span>
+                    <span>{selectedTab === "banner" ? "5 seconds" : "10 seconds"}</span>
+                  </div>
+                  <div className="flex justify-between text-sm text-gray-500 dark:text-gray-400">
+                    <span>Ad Type:</span>
+                    <span className="capitalize">{selectedTab}</span>
                   </div>
                 </div>
-              )}
-              
-              <div className="mt-2 border-t border-gray-200 dark:border-gray-700 pt-2">
-                <div className="text-xs text-blue-600 dark:text-blue-400 font-medium">
-                  Book 3 months, get 1 month free!
+                
+                {tier !== "basic" && (
+                  <div className="mt-2 border-t border-gray-200 dark:border-gray-700 pt-2">
+                    <div className="text-xs text-green-600 dark:text-green-400 font-medium">
+                      +{plan.bonus * 100}% bonus reach included
+                    </div>
+                  </div>
+                )}
+                
+                <div className="mt-2 border-t border-gray-200 dark:border-gray-700 pt-2">
+                  <div className="text-xs text-blue-600 dark:text-blue-400 font-medium">
+                    Book 3 months, get 1 month free!
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        </ScrollablePlans>
       </div>
     );
   };

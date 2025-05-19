@@ -13,7 +13,9 @@ const ScrollablePlans: React.FC<ScrollablePlansProps> = ({
 }) => {
   return (
     <ScrollArea className="w-full" style={{ maxHeight }}>
-      {children}
+      <div className="pr-4">
+        {children}
+      </div>
     </ScrollArea>
   );
 };
