@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import {
   Dialog,
@@ -49,7 +48,7 @@ const PlanSelector: React.FC<PlanSelectorProps> = ({ isOpen, setIsOpen, onSelect
   const [selectedTab, setSelectedTab] = useState<"banner" | "video">(currentAdType === "video" ? "video" : "banner");
   
   // Banner Plans (5 seconds) - Updated based on the image data
-  const bannerPlans: BannerPlans = {
+  const bannerPlans: any = {
     basic: [
       { tier: "basic", label: "Basic", bonus: 0, price: 999, reachInMonth: 20000, reachPerDay: 660 },
       { tier: "basic", label: "Basic", bonus: 0, price: 1499, reachInMonth: 30000, reachPerDay: 1000 },
@@ -80,7 +79,7 @@ const PlanSelector: React.FC<PlanSelectorProps> = ({ isOpen, setIsOpen, onSelect
   };
 
   // Video Plans (10 seconds) - Updated based on the image data
-  const videoPlans: VideoPlans = {
+  const videoPlans: any = {
     basic: [
       { tier: "basic", label: "Basic", bonus: 0, price: 999, reachInMonth: 10000, reachPerDay: 330 },
       { tier: "basic", label: "Basic", bonus: 0, price: 1499, reachInMonth: 15000, reachPerDay: 500 },
@@ -139,7 +138,7 @@ const PlanSelector: React.FC<PlanSelectorProps> = ({ isOpen, setIsOpen, onSelect
             {tier.toUpperCase()} {tier !== "basic" && `(+${plans[0].bonus * 100}% Reach)`}
           </Badge>
         </div>
-        <ScrollablePlans maxHeight="300px">
+        <ScrollablePlans maxHeight="250px">
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
             {plans.map((plan, index) => (
               <div 

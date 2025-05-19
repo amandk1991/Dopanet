@@ -56,15 +56,11 @@ const Index = () => {
             let newValue = currentValue + (delta * step);
             
             // Handle min and max values
-            const min = inputElement.min !== "" ? parseFloat(inputElement.min) : null;
+            const min = inputElement.min !== "" ? parseFloat(inputElement.min) : 0; // Default min to 0
             const max = inputElement.max !== "" ? parseFloat(inputElement.max) : null;
             
-            // Enforce minimum value of 0 for all number inputs
-            if (min !== null) {
-              newValue = Math.max(newValue, min);
-            } else {
-              newValue = Math.max(newValue, 0); // Default min to 0 if not specified
-            }
+            // Ensure value is not negative
+            newValue = Math.max(newValue, min);
             
             // Enforce maximum value of 30 for campaign days
             if (inputElement.id === "campaignDays" || inputElement.name === "campaignDays") {
@@ -73,11 +69,16 @@ const Index = () => {
               newValue = Math.min(newValue, max);
             }
             
+            // Update input value
             inputElement.value = String(newValue);
             
-            // Trigger change event
-            const event = new Event('input', { bubbles: true });
-            input.dispatchEvent(event);
+            // Trigger input event for React state updates
+            const inputEvent = new Event('input', { bubbles: true });
+            inputElement.dispatchEvent(inputEvent);
+            
+            // Also trigger change event for React form handlers
+            const changeEvent = new Event('change', { bubbles: true });
+            inputElement.dispatchEvent(changeEvent);
           }
         });
       });
