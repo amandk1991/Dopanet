@@ -15,7 +15,8 @@ const ContactForm: React.FC = () => {
     email: "",
     businessName: "",
     budget: "",
-    message: ""
+    message: "",
+    phoneNumber: ""
   });
   const [loading, setLoading] = useState(false);
 
@@ -31,21 +32,34 @@ const ContactForm: React.FC = () => {
     try {
       // Send email using EmailJS
       await emailjs.send(
-        "service_id", // Replace with your service ID when provided
-        "template_id", // Replace with your template ID when provided
+        "service_532iw5j",
+        "template_9sdph3k",
         {
           from_name: formData.name,
+          name: formData.name,
           email: formData.email,
           business_name: formData.businessName,
+          "Phone Number": formData.phoneNumber || "Not provided",
           budget: formData.budget,
           message: formData.message,
+          industry: "Demo Request",
+          subcategory: "Partner Inquiry",
+          adType: "Demo Request",
+          planType: "Demo Request",
+          location: "Not specified",
+          duration: "Demo",
+          "campaign repeats": "N/A",
+          impressions: "N/A",
+          reach: "N/A",
+          impressionsPerDay: "N/A",
+          reachPerDay: "N/A",
           reply_to: formData.email,
         },
-        "your_public_key" // Replace with your public key when provided
+        "6Ut-GNRg2TeTDyaGw"
       );
 
       toast({
-        title: "Form submitted successfully!",
+        title: "Demo request submitted successfully!",
         description: "We'll contact you soon about your demo.",
       });
       
@@ -54,7 +68,8 @@ const ContactForm: React.FC = () => {
         email: "",
         businessName: "",
         budget: "",
-        message: ""
+        message: "",
+        phoneNumber: ""
       });
     } catch (error) {
       console.error("Error sending email:", error);
@@ -135,16 +150,27 @@ const ContactForm: React.FC = () => {
                       </div>
                       
                       <div className="space-y-2">
-                        <Label htmlFor="budget">Approximate Budget (in ₹)</Label>
+                        <Label htmlFor="phoneNumber">Phone Number</Label>
                         <Input
-                          id="budget"
-                          name="budget"
-                          placeholder="5000"
-                          value={formData.budget}
+                          id="phoneNumber"
+                          name="phoneNumber"
+                          placeholder="+91 9876543210"
+                          value={formData.phoneNumber}
                           onChange={handleInputChange}
-                          required
                         />
                       </div>
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="budget">Approximate Budget (in ₹)</Label>
+                      <Input
+                        id="budget"
+                        name="budget"
+                        placeholder="5000"
+                        value={formData.budget}
+                        onChange={handleInputChange}
+                        required
+                      />
                     </div>
                     
                     <div className="space-y-2">

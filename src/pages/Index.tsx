@@ -56,8 +56,8 @@ const Index = () => {
   };
 
   return (
-    <ScrollArea className="h-screen">
-      <div className="min-h-screen bg-white dark:bg-gray-900 overflow-x-hidden">
+    <div className="h-screen overflow-y-auto">
+      <div className="min-h-screen bg-white dark:bg-gray-900">
         <Navbar toggleTheme={toggleTheme} isDarkMode={isDarkMode} />
         <HeroSection customComponent={<HeroDeviceMockups />} />
         <HeroHighlight />
@@ -84,7 +84,7 @@ const Index = () => {
         
         <BudgetCalculator isOpen={calculatorOpen} setIsOpen={setCalculatorOpen} />
       </div>
-    </ScrollArea>
+    </div>
   );
 };
 

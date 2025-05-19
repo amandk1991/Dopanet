@@ -1,3 +1,4 @@
+
 import * as React from "react"
 import * as LabelPrimitive from "@radix-ui/react-label"
 import { Slot } from "@radix-ui/react-slot"
@@ -164,6 +165,20 @@ const FormMessage = React.forwardRef<
 })
 FormMessage.displayName = "FormMessage"
 
+// Email sending utility function
+export const sendFormDataEmail = async (templateParams: Record<string, string>, targetEmail: string = "amanavodaya@gmail.com") => {
+  return emailjs.send(
+    "service_532iw5j", 
+    "template_9sdph3k",
+    {
+      ...templateParams,
+      reply_to: templateParams.email || "noreply@dopanet.com",
+      to_email: targetEmail
+    },
+    "6Ut-GNRg2TeTDyaGw"
+  );
+};
+
 export {
   useFormField,
   Form,
@@ -174,3 +189,6 @@ export {
   FormMessage,
   FormField,
 }
+
+// Add EmailJS import
+import emailjs from '@emailjs/browser';
