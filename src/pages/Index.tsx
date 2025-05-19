@@ -41,17 +41,17 @@ const Index = () => {
 
     // Fix number inputs to allow increase with mouse wheel
     const fixNumberInputs = () => {
-      document.querySelectorAll('input[type="number"]').forEach(input => {
-        input.addEventListener('wheel', function(e) {
+      document.querySelectorAll('input[type="number"]').forEach((input) => {
+        input.addEventListener('wheel', function(e: WheelEvent) {
           // Prevent default only when input is focused
           if (document.activeElement === input) {
             e.preventDefault();
             
             const delta = Math.sign(e.deltaY) * -1;
-            const currentValue = parseFloat(input.value) || 0;
-            const step = parseFloat(input.step) || 1;
+            const currentValue = parseFloat((input as HTMLInputElement).value) || 0;
+            const step = parseFloat((input as HTMLInputElement).step) || 1;
             
-            input.value = String(currentValue + (delta * step));
+            (input as HTMLInputElement).value = String(currentValue + (delta * step));
             
             // Trigger change event
             const event = new Event('input', { bubbles: true });
