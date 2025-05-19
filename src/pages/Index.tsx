@@ -39,7 +39,38 @@ const Index = () => {
       observer.observe(el);
     });
 
-    return () => observer.disconnect();
+    // Fix number inputs to allow increase with mouse wheel
+    const fixNumberInputs = () => {
+      document.querySelectorAll('input[type="number"]').forEach(input => {
+        input.addEventListener('wheel', function(e) {
+          // Prevent default only when input is focused
+          if (document.activeElement === input) {
+            e.preventDefault();
+            
+            const delta = Math.sign(e.deltaY) * -1;
+            const currentValue = parseFloat(input.value) || 0;
+            const step = parseFloat(input.step) || 1;
+            
+            input.value = String(currentValue + (delta * step));
+            
+            // Trigger change event
+            const event = new Event('input', { bubbles: true });
+            input.dispatchEvent(event);
+          }
+        });
+      });
+    };
+    
+    fixNumberInputs();
+    
+    // Re-apply fix when DOM changes (for dynamically added inputs)
+    const observer2 = new MutationObserver(fixNumberInputs);
+    observer2.observe(document.body, { childList: true, subtree: true });
+
+    return () => {
+      observer.disconnect();
+      observer2.disconnect();
+    };
   }, []);
 
   // Toggle theme
@@ -56,7 +87,7 @@ const Index = () => {
   };
 
   return (
-    <div className="h-screen overflow-y-auto">
+    <ScrollArea className="h-screen w-full">
       <div className="min-h-screen bg-white dark:bg-gray-900">
         <Navbar toggleTheme={toggleTheme} isDarkMode={isDarkMode} />
         <HeroSection customComponent={<HeroDeviceMockups />} />
@@ -84,7 +115,7 @@ const Index = () => {
         
         <BudgetCalculator isOpen={calculatorOpen} setIsOpen={setCalculatorOpen} />
       </div>
-    </div>
+    </ScrollArea>
   );
 };
 

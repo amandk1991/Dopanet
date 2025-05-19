@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -6,7 +5,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import emailjs from '@emailjs/browser';
+import { sendFormDataEmail } from "@/components/ui/form";
 
 const ContactForm: React.FC = () => {
   const { toast } = useToast();
@@ -30,33 +29,27 @@ const ContactForm: React.FC = () => {
     setLoading(true);
     
     try {
-      // Send email using EmailJS
-      await emailjs.send(
-        "service_532iw5j",
-        "template_9sdph3k",
-        {
-          from_name: formData.name,
-          name: formData.name,
-          email: formData.email,
-          business_name: formData.businessName,
-          "Phone Number": formData.phoneNumber || "Not provided",
-          budget: formData.budget,
-          message: formData.message,
-          industry: "Demo Request",
-          subcategory: "Partner Inquiry",
-          adType: "Demo Request",
-          planType: "Demo Request",
-          location: "Not specified",
-          duration: "Demo",
-          "campaign repeats": "N/A",
-          impressions: "N/A",
-          reach: "N/A",
-          impressionsPerDay: "N/A",
-          reachPerDay: "N/A",
-          reply_to: formData.email,
-        },
-        "6Ut-GNRg2TeTDyaGw"
-      );
+      // Updated implementation to use the utility function
+      await sendFormDataEmail({
+        from_name: formData.name,
+        name: formData.name,
+        email: formData.email,
+        business_name: formData.businessName,
+        "Phone Number": formData.phoneNumber || "Not provided",
+        budget: formData.budget,
+        message: formData.message,
+        industry: "Demo Request",
+        subcategory: "Partner Inquiry",
+        adType: "Demo Request",
+        planType: "Demo Request",
+        location: "Not specified",
+        duration: "Demo",
+        "campaign repeats": "N/A",
+        impressions: "N/A",
+        reach: "N/A",
+        impressionsPerDay: "N/A",
+        reachPerDay: "N/A",
+      });
 
       toast({
         title: "Demo request submitted successfully!",
