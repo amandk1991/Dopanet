@@ -228,7 +228,7 @@ const BudgetCalculator: React.FC<BudgetCalculatorProps> = ({ isOpen, setIsOpen }
   const calculateFreeMonths = (repeatMonths: number) => {
     if (repeatMonths >= 12) return 12; // 12 months free for 12-month subscription
     if (repeatMonths >= 6) return 3;  // 3 months free for 6-month subscription
-    if (repeatMonths >= 3) return 2;  // 2 months free for 3-month subscription
+    if (repeatMonths >= 3) return 1;  // 1 months free for 3-month subscription
     return 0; // No free months for shorter durations
   };
 
@@ -371,13 +371,13 @@ const BudgetCalculator: React.FC<BudgetCalculatorProps> = ({ isOpen, setIsOpen }
         free_months: calculatedValues.freeMonths
       };
       
-      // Will be implemented when service ID and template ID are provided
-      // await emailjs.send(
-      //   "YOUR_SERVICE_ID", 
-      //   "YOUR_TEMPLATE_ID",
-      //   templateParams,
-      //   "YOUR_PUBLIC_KEY"
-      // );
+      await emailjs.send(
+  "service_532iw5j", 
+  "template_9sdph3k",
+  templateParams,
+  "6Ut-GNRg2TeTDyaGw"
+);
+
       
       toast({
         title: "Campaign details submitted",
