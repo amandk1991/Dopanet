@@ -1,16 +1,24 @@
-
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Accordion,
-  AccordionContent, 
+  AccordionContent,
   AccordionItem,
   AccordionTrigger
 } from "@/components/ui/accordion";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Send } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+
+// Assuming you have a file for API calls, e.g., api.ts
+// import { generateBotResponse } from "../api";
 
 const FaqSection: React.FC = () => {
   const { toast } = useToast();
@@ -32,429 +40,135 @@ const FaqSection: React.FC = () => {
       gender: null as string | null,
       age: null as string | null,
       premises: [] as string[],
-      cities: [] as string[], // Assuming city targeting is possible and affects CPM
     },
   });
 
-  // Function to calculate campaign metrics
-  const calculateCampaignMetrics = () => {
-    const { budget, adType, duration, campaignDays, hitsPerPerson, targeting } = campaignDetails;
+  // This is a placeholder for the actual AI model initialization.
+  // You would typically initialize the model here or in a separate file.
+  // const aiModel = useMemo(() => initializeGeminiModel(process.env.GEMINI_API_KEY), []); // Assuming you have the API key in environment variables
 
-    if (budget === null || adType === null || duration === null || campaignDays === null || hitsPerPerson === null) {
-      return null; // Not enough information
-    }
-
-    const baseCpm = (duration || (adType === 'banner' ? 5 : 10)) * 10; // Use provided duration or min if not set
-   let targetingCpmIncrease = 0;
-    
-    // Calculate targeting CPM increase
-    if (targeting.gender && targeting.gender !== 'General') {
-      targetingCpmIncrease += adType === 'video' ? 30 : 15;
-    }
-    if (targeting.age) {
-      targetingCpmIncrease += adType === 'video' ? 30 : 15;
-    }
-    targetingCpmIncrease += (adType === 'video' ? 30 : 15) * targeting.premises.length;
- targetingCpmIncrease += (adType === 'video' ? 30 : 15) * targeting.cities.length;
-
-    const totalCpm = baseCpm + targetingCpmIncrease;
-    
-    // Calculations based on provided formulas
-    const estimatedImpressions = (budget / totalCpm) * 100 * (campaignDays / 30); // Adjusted formula based on days and CPM definition
-    const estimatedReach = estimatedImpressions / hitsPerPerson;
-    const impressionsPerDay = estimatedImpressions / campaignDays;
-    // Assuming 'hits per person per day' is implicitly hitsPerPerson / campaignDays for calculation convenience
-    const reachPerDay = estimatedReach / campaignDays; // Assuming reach per day is total reach / campaign days
-
-    return {
-      totalCpm: totalCpm.toFixed(2),
-      estimatedImpressions: Math.round(estimatedImpressions),
-      estimatedReach: Math.round(estimatedReach),
-      impressionsPerDay: Math.round(impressionsPerDay),
-      reachPerDay: Math.round(reachPerDay),
-    };
-  };
-
-  // Simple function to recommend plans based on estimated reach (monthly)
-  const recommendPlans = (monthlyReach: number) => {
-    // Simplified example based on plan structure description
-    const recommendations: string[] = [];
-
-    // Example plan data (replace with actual parsing of the full dopanetInfo if needed)
-    const plans = [
-      { price: 999, reach: 10000, type: 'video' },
-      { price: 1499, reach: 15000, type: 'video' },
-      { price: 1999, reach: 20000, type: 'video' },
-      { price: 2999, reach: 30000, type: 'video' },
-      { price: 4999, reach: 50000, type: 'video' },
-      { price: 9999, reach: 100000, type: 'video' },
-      { price: 19999, reach: 220000, type: 'video' }, // Silver +10%
-      { price: 29999, reach: 330000, type: 'video' }, // Silver +10%
-      { price: 39999, reach: 440000, type: 'video' }, // Silver +10%
-      { price: 49999, reach: 550000, type: 'video' }, // Silver +10%
-      { price: 99999, reach: 1150000, type: 'video' }, // Gold +15%
-      // ... add more video plans
-
-      { price: 999, reach: 20000, type: 'banner' },
-      { price: 1499, reach: 30000, type: 'banner' },
-      { price: 1999, reach: 40000, type: 'banner' },
-      { price: 2999, reach: 60000, type: 'banner' },
-      { price: 4999, reach: 100000, type: 'banner' },
-      { price: 9999, reach: 200000, type: 'banner' },
-      { price: 19999, reach: 440000, type: 'banner' }, // Silver +10%
-      // ... add more banner plans
-    ];
-
-    const filteredPlans = plans.filter(plan => plan.type === campaignDetails.adType);
-
-    // Find plans that meet or exceed the monthly reach, sorted by price
-    const suitablePlans = filteredPlans
-      .filter(plan => plan.reach >= monthlyReach)
-      .sort((a, b) => a.price - b.price);
-
-    if (suitablePlans.length > 0) {
-      recommendations.push("Based on your estimated monthly reach, here are some potential plans:");
-      suitablePlans.slice(0, 3).forEach(plan => { // Recommend top 3 by price
-        recommendations.push(`- ₹${plan.price.toLocaleString()} Plan (Offers ~${plan.reach.toLocaleString()} monthly reach)`);
-      });
-      if (suitablePlans.length > 3) {
-        recommendations.push("... and other plans are available with higher reach.");
-      }
-      recommendations.push("\nVisit our website for the full pricing details.");
-    } else {
-      recommendations.push("Based on your estimated monthly reach, we recommend reviewing our higher-tier plans or contacting sales for a custom quote.");
-    }
-
-    return recommendations.join('\n');
-  };
-
-
-  const handleSendMessage = () => {
+  const handleSendMessage = async () => {
     if (!chatMessage.trim()) return;
 
-    // Add user message to chat
-    setChatHistory(prev => [...prev, { role: "user", content: chatMessage }]);
+    const newUserMessage = { role: "user", content: chatMessage };
+    setChatHistory(prev => [...prev, newUserMessage]);
     const lowerCaseMessage = chatMessage.trim().toLowerCase();
     setChatMessage(""); // Clear the input field immediately
 
+    // Placeholder for AI response generation
     let botResponse = '';
     let nextStep = inputStep;
 
-    switch (inputStep) {
-      case 'initial':
-        if (lowerCaseMessage.includes('campaign') || lowerCaseMessage.includes('advertise') || lowerCaseMessage.includes('plan')) {
-          botResponse = "Okay, let's plan your campaign. First, what is your approximate budget in INR?";
-          nextStep = 'budget';
-        } else {
-          // Default response for general questions (can be enhanced with a simple AI model if needed)
-          botResponse = "Thanks for your message! I can help you plan a campaign. What is your approximate budget?";
-          nextStep = 'budget'; // Move to budget step
-        }
-        break;
-      case 'budget':
-        const budgetMatch = lowerCaseMessage.match(/(\d+)/);
-        if (budgetMatch && budgetMatch[1]) {
-          const budget = parseInt(budgetMatch[1], 10);
-          setCampaignDetails(prev => ({ ...prev, budget }));
-          botResponse = "Great. Now, what type of ad are you interested in? Banner or Video?";
-          nextStep = 'adType';
-        } else {
-          botResponse = "Please provide your budget in numbers (e.g., 'My budget is 5000').";
-          nextStep = 'budget'; // Stay on budget step
-        }
-        break;
-      case 'adType':
-        if (lowerCaseMessage.includes('banner')) {
-          setCampaignDetails(prev => ({ ...prev, adType: 'banner', duration: 5 })); // Default banner duration
-          botResponse = "Understood, Banner Ad. How many days will your campaign run (up to 30 days)?";
-          nextStep = 'campaignDays';
-        } else if (lowerCaseMessage.includes('video')) {
-          setCampaignDetails(prev => ({ ...prev, adType: 'video', duration: 10 })); // Default video duration
-          botResponse = "Understood, Video Ad. How many days will your campaign run (up to 30 days)?";
-          nextStep = 'campaignDays';
-        } else {
-          botResponse = "Please specify either 'Banner' or 'Video' ad type.";
-          nextStep = 'adType'; // Stay on adType step
-        }
-        break;
-      case 'campaignDays':
-        const daysMatch = lowerCaseMessage.match(/(\d+)/);
-        if (daysMatch && daysMatch[1]) {
-          const days = parseInt(daysMatch[1], 10);
-          if (days > 0 && days <= 30) {
-            setCampaignDetails(prev => ({ ...prev, campaignDays: days }));
-            botResponse = "Thanks. On average, how many times should one person see your ad during the campaign?";
-            nextStep = 'hitsPerPerson';
-          } else {
-            botResponse = "Please provide the number of campaign days as a number between 1 and 30.";
-            nextStep = 'campaignDays'; // Stay on campaignDays step
-          }
-        } else {
-          botResponse = "Please provide the number of campaign days as a number (e.g., '15 days').";
-          nextStep = 'campaignDays'; // Stay on campaignDays step
-        }
-        break;
-      case 'hitsPerPerson':
-        const hitsMatch = lowerCaseMessage.match(/(\d+)/);
-        if (hitsMatch && hitsMatch[1]) {
-          const hits = parseInt(hitsMatch[1], 10);
-          if (hits > 0) {
-            setCampaignDetails(prev => ({ ...prev, hitsPerPerson: hits }));
-            botResponse = "Okay. Do you have any specific targeting preferences (e.g., gender, age group, premise types like cafes or malls, or cities) or should we use general targeting?";
-            nextStep = 'targeting';
-          } else {
-            botResponse = "Please provide a valid number for how many times one person should see your ad.";
-            nextStep = 'hitsPerPerson'; // Stay on hitsPerPerson step
-          }
-        } else {
-          botResponse = "Please provide the number of times per person as a number (e.g., '3 times').";
-          nextStep = 'hitsPerPerson'; // Stay on hitsPerPerson step
-        }
-        break;
-      case 'targeting':
-        // Simplified targeting interpretation - can be expanded
-        const targetingUpdates: { gender?: string | null; age?: string | null; premises?: string[]; cities?: string[] } = {};
-
-        if (lowerCaseMessage.includes('male')) targetingUpdates.gender = 'Male';
-        if (lowerCaseMessage.includes('female')) targetingUpdates.gender = 'Female';
-        if (lowerCaseMessage.includes('other gender')) targetingUpdates.gender = 'Other';
-
-        // Basic age group detection (can be made more robust)
-        const ageMatch = lowerCaseMessage.match(/(\d+)-(\d+)\s*age/);
-        if (ageMatch && ageMatch[1] && ageMatch[2]) {
-          targetingUpdates.age = `${ageMatch[1]}-${ageMatch[2]}`;
-        } else if (lowerCaseMessage.includes('age')) {
-          targetingUpdates.age = 'Specified'; // Indicate age is specified but needs more detail
-        }
-
-        // Basic premise type detection
-        const premisesKeywords = ['cafe', 'mall', 'restaurant', 'hostel', 'college'];
-        const selectedPremises = premisesKeywords.filter(keyword => lowerCaseMessage.includes(keyword));
-        if (selectedPremises.length > 0) {
-          targetingUpdates.premises = selectedPremises;
-        } else if (lowerCaseMessage.includes('premise')) {
-           targetingUpdates.premises = ['Specified']; // Indicate premises are specified but need more detail
-        }
-
-        // Basic city detection (needs a predefined list or more advanced NLP)
-        const cityKeywords = ['delhi', 'mumbai', 'bangalore', 'kolkata', 'chennai']; // Example cities
-        const selectedCities = cityKeywords.filter(keyword => lowerCaseMessage.includes(keyword));
-         if (selectedCities.length > 0) {
-          targetingUpdates.cities = selectedCities;
-        } else if (lowerCaseMessage.includes('city')) {
-           targetingUpdates.cities = ['Specified']; // Indicate cities are specified but need more detail
-        }
-
-        if (lowerCaseMessage.includes('general') || lowerCaseMessage.includes('broad') || Object.keys(targetingUpdates).length === 0) {
-          setCampaignDetails(prev => ({
-            ...prev,
-            targeting: { gender: null, age: null, premises: [], cities: [] }
-          }));
-          botResponse = "Okay, using general targeting. Let me calculate your campaign metrics.";
-          nextStep = 'calculating';
-        } else {
-           setCampaignDetails(prev => ({
-            ...prev,
-            targeting: {
-              ...prev.targeting, // Keep existing targeting if not overridden
-              ...targetingUpdates
-            }
-          }));
-           // Ask for clarification if targeting is specified but not enough detail
-           if (targetingUpdates.age === 'Specified' || targetingUpdates.premises?.includes('Specified') || targetingUpdates.cities?.includes('Specified')) {
-              let clarification = "Understood on targeting preferences. Could you please provide more specific details on ";
-              const needsClarification = [];
-              if (targetingUpdates.age === 'Specified') needsClarification.push('age group');
-              if (targetingUpdates.premises?.includes('Specified')) needsClarification.push('premise types');
-              if (targetingUpdates.cities?.includes('Specified')) needsClarification.push('cities');
-              botResponse = clarification + needsClarification.join(' and ') + "? Otherwise, I can proceed with current details.";
-              nextStep = 'targeting'; // Stay on targeting step for refinement
-           } else {
-               botResponse = "Thanks for the targeting details. Let me calculate your campaign metrics.";
-               nextStep = 'calculating';
-           }
-        }
-        break;
-      case 'calculating':
-        const metrics = calculateCampaignMetrics();
-
-        if (metrics) {
-          const monthlyReach = metrics.estimatedReach * (30 / (campaignDetails.campaignDays || 30)); // Estimate monthly reach
-          const planRecommendations = recommendPlans(monthlyReach);
-
-          botResponse = `Based on your requirements:\n\n` +
-            `- Budget: ₹${campaignDetails.budget?.toLocaleString()}\n` +
-            `- Ad Type: ${campaignDetails.adType === 'banner' ? 'Banner Ad' : 'Video Ad'} (${campaignDetails.duration}s)\n` +
-            `- Campaign Days: ${campaignDetails.campaignDays}\n` +
-            `- Hits Per Person: ${campaignDetails.hitsPerPerson}\n` +
-            `- Targeting: ${campaignDetails.targeting.gender ? 'Gender: ' + campaignDetails.targeting.gender + ', ' : ''}${campaignDetails.targeting.age ? 'Age: ' + campaignDetails.targeting.age + ', ' : ''}${campaignDetails.targeting.premises.length > 0 ? 'Premises: ' + campaignDetails.targeting.premises.join(', ') + ', ' : ''}${campaignDetails.targeting.cities.length > 0 ? 'Cities: ' + campaignDetails.targeting.cities.join(', ') : '' || 'General'}\n\n` +
-            `Estimated Results:\n\n` +
-            `- Estimated CPM: ₹${metrics.totalCpm}\n` +
-            `- Estimated Total Impressions: ${metrics.estimatedImpressions.toLocaleString()}\n` +
-            `- Estimated Total Reach: ${metrics.estimatedReach.toLocaleString()}\n` +
-            `- Estimated Impressions/Day: ${metrics.impressionsPerDay.toLocaleString()}\n` +
-            `- Estimated Reach/Day: ${metrics.reachPerDay.toLocaleString()}\n\n` +
-             planRecommendations;
-
-          nextStep = 'initial'; // Reset for a new query
-          setCampaignDetails({ budget: null, adType: null, duration: null, campaignDays: null, hitsPerPerson: null, targeting: { gender: null, age: null, premises: [], cities: [] } }); // Reset campaign details
-        } else {
-          botResponse = "I seem to be missing some information to calculate. Could you please re-confirm your campaign details?";
-          nextStep = 'initial'; // Reset and ask to start again
-           setCampaignDetails({ budget: null, adType: null, duration: null, campaignDays: null, hitsPerPerson: null, targeting: { gender: null, age: null, premises: [], cities: [] } }); // Reset campaign details
-        }
-        break;
-      default:
-        botResponse = "I'm not sure how to respond to that. How can I help you with advertising on our platform?";
-        nextStep = 'initial'; // Reset to initial state
-        break;
+    // Here you would call your backend or a function that interacts with the Gemini API
+    // For now, this is a simple echo or rule-based response
+    if (lowerCaseMessage.includes("hello") || lowerCaseMessage.includes("hi")) {
+      botResponse = "Hello! How can I assist you with your advertising campaign?";
+    } else if (lowerCaseMessage.includes("budget")) {
+      botResponse = "What is your desired budget for the campaign?";
+      nextStep = 'budget';
+    } else {
+      botResponse = "I am still learning and can only respond to 'hello', 'hi', or 'budget' at the moment. How else can I help?";
     }
 
-    // Simulate bot response
+    // Simulate a delay for the bot response
     setTimeout(() => {
       setChatHistory(prev => [...prev, { role: "bot", content: botResponse }]);
-      setInputStep(nextStep); // Move to the next step
-    }, 1000);
+      setInputStep(nextStep);
+    }, 500);
   };
 
-  const faqs = [
-    {
-      category: "Getting Started",
-      questions: [
-        {
-          question: "How do I register as an advertiser?",
-          answer: "You can register by filling out the contact form on our website or by clicking the 'Start Advertising' button. Our team will reach out to set up your account within 24 hours."
-        },
-        {
-          question: "Is there a minimum ad spend?",
-          answer: "Yes, our minimum campaign budget starts at ₹500. This ensures that your ads receive significant exposure and generate meaningful results."
-        },
-        {
-          question: "What types of ads can I display?",
-          answer: "We support banner ads, video ads, and interactive rich media formats. All ads are designed to be non-intrusive while maintaining high visibility."
-        }
-      ]
-    },
-    {
-      category: "Data & Privacy",
-      questions: [
-        {
-          question: "Is Dopanet data usage compliant in India?",
-          answer: "Yes, Dopanet is fully compliant with India's Digital Personal Data Protection (DPDP) Bill. We adhere to strict privacy standards to protect both user and advertiser data."
-        },
-        {
-          question: "Do users know their data is used?",
-          answer: "Absolutely. Users are clearly informed that the free WiFi service is ad-supported before they connect. We maintain transparency about how anonymized data is used for ad targeting."
-        },
-        {
-          question: "What user data do you collect?",
-          answer: "We collect anonymous browsing patterns and general location data. We never collect or store personally identifiable information such as names, phone numbers, or email addresses."
-        }
-      ]
-    },
-    {
-      category: "Performance",
-      questions: [
-        {
-          question: "How can I track ad performance?",
-          answer: "All advertisers get access to our real-time analytics dashboard where you can track impressions, clicks, engagement rates, and estimated conversion metrics."
-        },
-        {
-          question: "What's the average engagement rate?",
-          answer: "Our platform achieves an average click-through rate of 6.2%, significantly higher than the industry standard of 0.5-1% for traditional digital ads."
-        },
-        {
-          question: "Can I make changes to my campaign after it launches?",
-          answer: "Yes, you can modify your campaign settings, targeting criteria, and creative assets at any time through our advertiser portal. Changes typically take effect within 15 minutes."
-        }
-      ]
+  const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      handleSendMessage();
     }
-  ];
+  };
 
   return (
-    <section id="faqs" className="section-padding bg-gray-50 dark:bg-gray-900/50 relative">
-      <div className="container mx-auto">
-        <div className="text-center max-w-3xl mx-auto mb-16">
-          <h2 className="text-3xl md:text-4xl font-bold mb-4 text-gray-900 dark:text-white">
-            Frequently <span className="text-dopanet-500">Asked Questions</span>
-          </h2>
-          <p className="text-gray-600 dark:text-gray-300">
-            Have questions about advertising with Dopanet? Get answers or chat with our AI assistant
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-          <div className="reveal">
-            <div className="glass-card p-6 md:p-8 h-full flex flex-col">
-              <h3 className="text-2xl font-bold mb-6 text-gray-900 dark:text-white">
-                Chat with our AI Assistant
-              </h3>
-              
-              <div className="flex-grow overflow-y-auto mb-4 bg-white dark:bg-gray-800/50 rounded-lg p-4 shadow-inner h-96">
-                <div className="space-y-4">
-                  {chatHistory.map((msg, index) => (
-                    <div 
-                      key={index} 
-                      className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
-                    >
-                      <div 
-                        className={`max-w-[80%] rounded-lg p-3 ${
-                          msg.role === 'user' 
-                            ? 'bg-dopanet-500 text-white' 
-                            : 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white'
-                        }`}
-                      >
-                        {msg.content}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-              
-              <div className="flex items-center space-x-2">
-                <Input
-                  type="text"
-                  placeholder="Type your question here..."
-                  value={chatMessage} 
-                  onChange={(e) => setChatMessage(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
-                  className="flex-grow"
-                />
-                <Button onClick={handleSendMessage} className="bg-dopanet-500 hover:bg-dopanet-600">
-                  <Send className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
+    <section id="faq" className="w-full py-12 md:py-24 lg:py-32 bg-muted">
+      <div className="container px-4 md:px-6">
+        <div className="flex flex-col items-center justify-center space-y-4 text-center">
+          <div className="space-y-2">
+            <h2 className="text-3xl font-bold tracking-tighter md:text-4xl/loose">Frequently Asked Questions</h2>
+            <p className="text-muted-foreground md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed">
+              Find answers to common questions about advertising on Dopanet.
+            </p>
           </div>
-          
-          <div className="reveal">
-            <div className="glass-card p-6 md:p-8 h-full">
-              <h3 className="text-2xl font-bold mb-6 text-gray-900 dark:text-white">
-                Common Questions
-              </h3>
-              
-              <div className="space-y-6">
-                {faqs.map((category, i) => (
-                  <div key={i} className="space-y-4">
-                    <h4 className="text-lg font-semibold text-dopanet-500">
-                      {category.category}
-                    </h4>
-                    
-                    <Accordion type="single" collapsible className="w-full">
-                      {category.questions.map((faq, j) => (
-                        <AccordionItem key={j} value={`item-${i}-${j}`} className="border-b border-gray-200 dark:border-gray-700">
-                          <AccordionTrigger className="text-left font-medium text-gray-900 dark:text-white hover:text-dopanet-500 dark:hover:text-dopanet-400">
-                            {faq.question}
-                          </AccordionTrigger>
-                          <AccordionContent className="text-gray-600 dark:text-gray-300">
-                            {faq.answer}
-                          </AccordionContent>
-                        </AccordionItem>
-                      ))}
-                    </Accordion>
+        </div>
+        <div className="mx-auto grid max-w-5xl items-start gap-10 py-12 lg:grid-cols-2">
+          <div className="space-y-4">
+            <Accordion type="single" collapsible className="w-full">
+              <AccordionItem value="item-1">
+                <AccordionTrigger>What types of businesses can advertise on Dopanet?</AccordionTrigger>
+                <AccordionContent>
+                  Dopanet is suitable for a wide range of businesses, from local shops and restaurants to larger enterprises looking to reach a targeted local audience through our WiFi platform.
+                </AccordionContent>
+              </AccordionItem>
+              <AccordionItem value="item-2">
+                <AccordionTrigger>How does the targeting work?</AccordionTrigger>
+                <AccordionContent>
+                  Our platform allows for precise targeting based on location, demographics, and interests, ensuring your ads are seen by the most relevant audience connected to our WiFi.
+                </AccordionContent>
+              </AccordionItem>
+              <AccordionItem value="item-3">
+                <AccordionTrigger>What is the cost of advertising?</AccordionTrigger>
+                <AccordionContent>
+                  Advertising costs vary depending on your campaign's reach, duration, and targeting options. We offer flexible plans to fit different budgets. Our AI assistant can help you estimate costs.
+                </AccordionContent>
+              </AccordionItem>
+              <AccordionItem value="item-4">
+                <AccordionTrigger>What kind of ad formats are supported?</AccordionTrigger>
+                <AccordionContent>
+                  We support various ad formats, including banner ads and video ads, designed to be non-intrusive and effective within the WiFi login experience.
+                </AccordionContent>
+              </AccordionItem>
+            </Accordion>
+          </div>
+          <div className="space-y-4">
+            <div className="rounded-lg border bg-card text-card-foreground shadow-sm p-6">
+              <div className="flex flex-col space-y-1.5 pb-6">
+                <h3 className="text-2xl font-semibold leading-none tracking-tight">AI Advertising Assistant</h3>
+                <p className="text-sm text-muted-foreground">Chat with our AI to get help with your advertising campaign.</p>
+              </div>
+              <div className="space-y-4 max-h-60 overflow-y-auto mb-4">
+                {chatHistory.map((message, index) => (
+                  <div key={index} className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                    <div className={`rounded-lg p-3 max-w-[70%] ${message.role === 'user' ? 'bg-primary text-primary-foreground' : 'bg-muted-foreground text-muted'}`}>
+                      <p>{message.content}</p>
+                    </div>
                   </div>
                 ))}
               </div>
+              <div className="flex items-center pt-4">
+                <Input
+                  placeholder="Type your message..."
+                  className="flex-1 mr-2"
+                  value={chatMessage}
+                  onChange={(e) => setChatMessage(e.target.value)}
+                  onKeyPress={handleKeyPress}
+                />
+                 <Button type="submit" onClick={handleSendMessage}>
+                  <Send className="h-4 w-4 mr-2" /> Send
+                </Button>
+              </div>
+               {/* Input steps based on AI interaction */}
+               {inputStep === 'budget' && (
+                <div className="pt-4">
+                  <Input type="number" placeholder="Enter your budget" />
+                </div>
+               )}
+                {inputStep === 'adType' && (
+                 <div className="pt-4">
+                   <Select>
+                     <SelectTrigger>
+                       <SelectValue placeholder="Select ad type" />
+                     </SelectTrigger>
+                     <SelectContent>
+                       <SelectItem value="banner">Banner</SelectItem>
+                       <SelectItem value="video">Video</SelectItem>
+                     </SelectContent>
+                   </Select>
+                 </div>
+                )}
             </div>
           </div>
         </div>
