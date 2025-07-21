@@ -74,6 +74,10 @@ const BudgetCalculator: React.FC<BudgetCalculatorProps> = ({ isOpen, setIsOpen }
     timeSlots: [] as string[] // Added for time slots
   });
 
+  useEffect(() => {
+ emailjs.init("6Ut-GNRg2TeTDyaGw"); // Replace with your actual EmailJS User ID
+  }, []); // Empty dependency array ensures this runs only once on mount
+
   // New plan-related state
   const [selectedPlan, setSelectedPlan] = useState<Plan | null>(null);
   const [isCustomPlan, setIsCustomPlan] = useState(true);
@@ -407,9 +411,14 @@ const BudgetCalculator: React.FC<BudgetCalculatorProps> = ({ isOpen, setIsOpen }
       const page = pdfDoc.addPage([612, 792]); // 8.5 x 11 inches
       const { width, height } = page.getSize();
       
-      // Load font
-      const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
-      const boldFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+      // --- Font Loading ---
+      // To support the Rupee symbol (₹), you need to embed a font file (.ttf or .otf)
+      // that contains this glyph. StandardFonts often use WinAnsi encoding which doesn't
+      // include it.
+      // Replace the following lines with code to load your font file bytes
+      // and then embed the font.
+      const font = await pdfDoc.embedFont(StandardFonts.Helvetica); // Placeholder - Replace with your loaded font
+      const boldFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold); // Placeholder - Replace with your loaded bold font
       
       // Set initial position for content
       const margin = 50;
@@ -437,8 +446,8 @@ const BudgetCalculator: React.FC<BudgetCalculatorProps> = ({ isOpen, setIsOpen }
       });
       y -= lineHeight * 1.5;
       
-      // Add campaign details
       const addLine = (label: string, value: string) => {
+ if (value === null || value === undefined) value = 'N/A'; // Handle potential null/undefined values
         page.drawText(`${label}:`, {
           x: margin,
           y,
@@ -497,14 +506,14 @@ const BudgetCalculator: React.FC<BudgetCalculatorProps> = ({ isOpen, setIsOpen }
       });
       y -= lineHeight * 1.5;
       
-      addLine('Budget', `₹${formData.budget.toLocaleString()}`);
-      addLine('Daily Budget', `₹${Math.round(formData.budget/formData.days).toLocaleString()}`);
-      addLine('CPM', `₹${calculatedValues.cpm}`);
+      addLine('Budget', `Rs. ${formData.budget.toLocaleString()}`);
+      addLine('Daily Budget', `Rs. ${Math.round(formData.budget/formData.days).toLocaleString()}`);
+      addLine('CPM', `Rs. ${calculatedValues.cpm}`);
       
       if (formData.repeatMonths > 1) {
-        addLine('Total Investment', `₹${(formData.budget * formData.repeatMonths).toLocaleString()}`);
-        addLine('Value with Free Months', `₹${(formData.budget * calculatedValues.totalMonths).toLocaleString()}`);
-        addLine('Savings', `₹${(formData.budget * calculatedValues.freeMonths).toLocaleString()}`);
+ addLine('Total Investment', `Rs. ${(formData.budget * formData.repeatMonths).toLocaleString()}`);
+ addLine('Value with Free Months', `Rs. ${(formData.budget * calculatedValues.totalMonths).toLocaleString()}`);
+ addLine('Savings', `Rs. ${(formData.budget * calculatedValues.freeMonths).toLocaleString()}`);
       }
       
       y -= lineHeight;
@@ -1150,7 +1159,7 @@ const BudgetCalculator: React.FC<BudgetCalculatorProps> = ({ isOpen, setIsOpen }
                           <p className="text-sm text-gray-500 dark:text-gray-400">Budget & Duration</p>
                           <p className="font-medium">
                             ₹{formData.budget.toLocaleString()} over {formData.days} days (₹{Math.round(formData.budget/formData.days).toLocaleString()}/day)
-                          </p>
+ </p>
                         </div>
                         
                         {formData.repeatMonths > 1 && (
@@ -1376,19 +1385,19 @@ const BudgetCalculator: React.FC<BudgetCalculatorProps> = ({ isOpen, setIsOpen }
                         <div className="flex justify-between text-sm mb-1">
                           <span>CPM:</span>
                           <span className="font-semibold">₹{calculatedValues.cpm}</span>
-                        </div>
+ </div>
                         
                         <div className="flex justify-between text-sm mb-1">
                           <span>Total Impressions:</span>
                           <span className="font-semibold">{calculatedValues.totalImpressions.toLocaleString()}</span>
-                        </div>
+ </div>
                         
                         <div className="flex flex-col">
                           <div className="flex justify-between text-sm">
                             <span>Total Reach:</span>
                             <span className="font-semibold">{calculatedValues.totalReach.toLocaleString()}</span>
-                          </div>
-                          
+ </div>
+
                           {selectedPlan && !isCustomPlan && selectedPlan.tier !== "basic" && (
                             <div className="flex justify-between text-xs text-gray-500 pl-4">
                               <span>Base Reach:</span>
@@ -1396,7 +1405,7 @@ const BudgetCalculator: React.FC<BudgetCalculatorProps> = ({ isOpen, setIsOpen }
                             </div>
                           )}
                           
-                          {selectedPlan && !isCustomPlan && selectedPlan.tier !== "basic" && (
+ {selectedPlan && !isCustomPlan && selectedPlan.tier !== "basic" && (
                             <div className="flex justify-between text-xs text-green-500 dark:text-green-400 pl-4 font-medium">
                               <span>Bonus Reach:</span>
                               <span>+{calculatedValues.bonusReach.toLocaleString()}</span>
