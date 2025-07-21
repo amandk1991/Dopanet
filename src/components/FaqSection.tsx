@@ -17,8 +17,8 @@ import { Input } from "@/components/ui/input";
 import { Send } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
-// Assuming you have a file for API calls, e.g., api.ts
-// import { generateBotResponse } from "../api";
+const API_KEY = "AIzaSyC-fscJDsXpdVpPMKClJQn_BMg4wGpT4hA"; // Replace with your actual API key
+const API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent";
 
 const FaqSection: React.FC = () => {
   const { toast } = useToast();
@@ -43,38 +43,47 @@ const FaqSection: React.FC = () => {
     },
   });
 
-  // This is a placeholder for the actual AI model initialization.
-  // You would typically initialize the model here or in a separate file.
-  // const aiModel = useMemo(() => initializeGeminiModel(process.env.GEMINI_API_KEY), []); // Assuming you have the API key in environment variables
-
   const handleSendMessage = async () => {
     if (!chatMessage.trim()) return;
 
-    const newUserMessage = { role: "user", content: chatMessage };
+    const newUserMessage = { role: "user" as const, content: chatMessage };
     setChatHistory(prev => [...prev, newUserMessage]);
-    const lowerCaseMessage = chatMessage.trim().toLowerCase();
     setChatMessage(""); // Clear the input field immediately
 
-    // Placeholder for AI response generation
-    let botResponse = '';
-    let nextStep = inputStep;
+    try {
+      const response = await fetch(API_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-goog-api-key': API_KEY,
+        },
+        body: JSON.stringify({
+          contents: chatHistory.map(msg => ({
+            role: msg.role === 'user' ? 'user' : 'model', // Gemini API expects 'user' or 'model'
+            parts: [{ text: msg.content }],
+          })).concat([{ role: 'user', parts: [{ text: chatMessage }] }]), // Add the new user message
+        }),
+      });
 
-    // Here you would call your backend or a function that interacts with the Gemini API
-    // For now, this is a simple echo or rule-based response
-    if (lowerCaseMessage.includes("hello") || lowerCaseMessage.includes("hi")) {
-      botResponse = "Hello! How can I assist you with your advertising campaign?";
-    } else if (lowerCaseMessage.includes("budget")) {
-      botResponse = "What is your desired budget for the campaign?";
-      nextStep = 'budget';
-    } else {
-      botResponse = "I am still learning and can only respond to 'hello', 'hi', or 'budget' at the moment. How else can I help?";
+      if (!response.ok) {
+        throw new Error(`API request failed with status ${response.status}`);
+      }
+
+      const data = await response.json();
+      const botResponse = data?.candidates?.[0]?.content?.parts?.[0]?.text || "Sorry, I couldn't get a response from the AI.";
+
+      setChatHistory(prev => [...prev, { role: "bot" as const, content: botResponse }]);
+      // Further logic to handle bot response and update inputStep/campaignDetails
+
+    } catch (error) {
+      console.error("Error calling Gemini API:", error);
+      toast({
+        title: "Error",
+        description: "Failed to get a response from the AI assistant.",
+        variant: "destructive",
+      });
+      setChatHistory(prev => [...prev, { role: "bot" as const, content: "Sorry, there was an error processing your request." }]);
     }
-
-    // Simulate a delay for the bot response
-    setTimeout(() => {
-      setChatHistory(prev => [...prev, { role: "bot", content: botResponse }]);
-      setInputStep(nextStep);
-    }, 500);
   };
 
   const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {

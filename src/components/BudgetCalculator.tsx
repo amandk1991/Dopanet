@@ -74,10 +74,6 @@ const BudgetCalculator: React.FC<BudgetCalculatorProps> = ({ isOpen, setIsOpen }
     timeSlots: [] as string[] // Added for time slots
   });
 
-  useEffect(() => {
- emailjs.init("6Ut-GNRg2TeTDyaGw"); // Replace with your actual EmailJS User ID
-  }, []); // Empty dependency array ensures this runs only once on mount
-
   // New plan-related state
   const [selectedPlan, setSelectedPlan] = useState<Plan | null>(null);
   const [isCustomPlan, setIsCustomPlan] = useState(true);
@@ -93,7 +89,9 @@ const BudgetCalculator: React.FC<BudgetCalculatorProps> = ({ isOpen, setIsOpen }
     impressionsPerDay: 0,
     reachPerDay: 0,
     freeMonths: 0, // New for free months
-    totalMonths: 0 // Total including free months
+    totalMonths: 0, // Total including free months
+    budgetPoints: 0, // New: Budget Points (1 rs = 100 points)
+    pps: 0 // New: Points Per Second (1/CPM)
   });
   
   // Form submission loading state
@@ -191,9 +189,17 @@ const BudgetCalculator: React.FC<BudgetCalculatorProps> = ({ isOpen, setIsOpen }
     return baseCPM;
   };
 
-  // Calculate impressions and reach
+  // Calculate impressions and reach using new PPS and budget points logic
   const calculateImpressions = (cpm: number) => {
-    const impressions = formData.budget * (100 / formData.duration) * (100 / cpm);
+    // Budget Points: 1 rs = 100 points
+    const budgetPoints = formData.budget * 100;
+    
+    // PPS (Points Per Second): inversely proportional to CPM
+    const pps = 1 / cpm;
+    
+    // Total Impressions = (Budget Points × PPS × 100) / Duration of ad in seconds
+    const impressions = (budgetPoints * pps * 100) / formData.duration;
+    
     return Math.round(impressions);
   };
   
@@ -286,6 +292,10 @@ const BudgetCalculator: React.FC<BudgetCalculatorProps> = ({ isOpen, setIsOpen }
     const freeMonths = calculateFreeMonths(formData.repeatMonths);
     const totalMonths = formData.repeatMonths + freeMonths;
     
+    // Calculate budget points and PPS
+    const budgetPoints = formData.budget * 100;
+    const pps = 1 / cpm;
+    
     setCalculatedValues({
       cpm,
       baseReach,
@@ -295,7 +305,9 @@ const BudgetCalculator: React.FC<BudgetCalculatorProps> = ({ isOpen, setIsOpen }
       impressionsPerDay,
       reachPerDay,
       freeMonths,
-      totalMonths
+      totalMonths,
+      budgetPoints,
+      pps
     });
   }, [formData, selectedPlan, isCustomPlan]);
   
@@ -411,14 +423,9 @@ const BudgetCalculator: React.FC<BudgetCalculatorProps> = ({ isOpen, setIsOpen }
       const page = pdfDoc.addPage([612, 792]); // 8.5 x 11 inches
       const { width, height } = page.getSize();
       
-      // --- Font Loading ---
-      // To support the Rupee symbol (₹), you need to embed a font file (.ttf or .otf)
-      // that contains this glyph. StandardFonts often use WinAnsi encoding which doesn't
-      // include it.
-      // Replace the following lines with code to load your font file bytes
-      // and then embed the font.
-      const font = await pdfDoc.embedFont(StandardFonts.Helvetica); // Placeholder - Replace with your loaded font
-      const boldFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold); // Placeholder - Replace with your loaded bold font
+      // Load font
+      const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
+      const boldFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
       
       // Set initial position for content
       const margin = 50;
@@ -446,8 +453,8 @@ const BudgetCalculator: React.FC<BudgetCalculatorProps> = ({ isOpen, setIsOpen }
       });
       y -= lineHeight * 1.5;
       
+      // Add campaign details
       const addLine = (label: string, value: string) => {
- if (value === null || value === undefined) value = 'N/A'; // Handle potential null/undefined values
         page.drawText(`${label}:`, {
           x: margin,
           y,
@@ -506,14 +513,16 @@ const BudgetCalculator: React.FC<BudgetCalculatorProps> = ({ isOpen, setIsOpen }
       });
       y -= lineHeight * 1.5;
       
-      addLine('Budget', `Rs. ${formData.budget.toLocaleString()}`);
-      addLine('Daily Budget', `Rs. ${Math.round(formData.budget/formData.days).toLocaleString()}`);
-      addLine('CPM', `Rs. ${calculatedValues.cpm}`);
+      addLine('Budget', `₹${formData.budget.toLocaleString()}`);
+      addLine('Daily Budget', `₹${Math.round(formData.budget/formData.days).toLocaleString()}`);
+      addLine('Budget Points', `${calculatedValues.budgetPoints.toLocaleString()} pts`);
+      addLine('Points Per Second (PPS)', `${calculatedValues.pps.toFixed(4)} pts/sec`);
+      addLine('CPM', `₹${calculatedValues.cpm}`);
       
       if (formData.repeatMonths > 1) {
- addLine('Total Investment', `Rs. ${(formData.budget * formData.repeatMonths).toLocaleString()}`);
- addLine('Value with Free Months', `Rs. ${(formData.budget * calculatedValues.totalMonths).toLocaleString()}`);
- addLine('Savings', `Rs. ${(formData.budget * calculatedValues.freeMonths).toLocaleString()}`);
+        addLine('Total Investment', `₹${(formData.budget * formData.repeatMonths).toLocaleString()}`);
+        addLine('Value with Free Months', `₹${(formData.budget * calculatedValues.totalMonths).toLocaleString()}`);
+        addLine('Savings', `₹${(formData.budget * calculatedValues.freeMonths).toLocaleString()}`);
       }
       
       y -= lineHeight;
@@ -635,7 +644,15 @@ const BudgetCalculator: React.FC<BudgetCalculatorProps> = ({ isOpen, setIsOpen }
           </DialogHeader>
           
           {/* Global metrics bar - visible across all tabs */}
-          <div className="bg-gray-50 dark:bg-gray-800 p-3 my-2 rounded-lg grid grid-cols-2 md:grid-cols-5 gap-2 text-sm sticky top-0 z-10">
+          <div className="bg-gray-50 dark:bg-gray-800 p-3 my-2 rounded-lg grid grid-cols-2 md:grid-cols-7 gap-2 text-sm sticky top-0 z-10">
+            <div className="p-2 bg-white dark:bg-gray-900 rounded-md shadow-sm">
+              <div className="font-semibold text-blue-600 dark:text-blue-400">Budget Points</div>
+              <div className="text-lg font-bold">{calculatedValues.budgetPoints.toLocaleString()}</div>
+            </div>
+            <div className="p-2 bg-white dark:bg-gray-900 rounded-md shadow-sm">
+              <div className="font-semibold text-purple-600 dark:text-purple-400">PPS</div>
+              <div className="text-lg font-bold">{calculatedValues.pps.toFixed(4)}</div>
+            </div>
             <div className="p-2 bg-white dark:bg-gray-900 rounded-md shadow-sm">
               <div className="font-semibold text-dopanet-600 dark:text-dopanet-400">CPM</div>
               <div className="text-lg font-bold">₹{calculatedValues.cpm}</div>
@@ -1159,7 +1176,7 @@ const BudgetCalculator: React.FC<BudgetCalculatorProps> = ({ isOpen, setIsOpen }
                           <p className="text-sm text-gray-500 dark:text-gray-400">Budget & Duration</p>
                           <p className="font-medium">
                             ₹{formData.budget.toLocaleString()} over {formData.days} days (₹{Math.round(formData.budget/formData.days).toLocaleString()}/day)
- </p>
+                          </p>
                         </div>
                         
                         {formData.repeatMonths > 1 && (
@@ -1236,27 +1253,53 @@ const BudgetCalculator: React.FC<BudgetCalculatorProps> = ({ isOpen, setIsOpen }
                         </div>
                       </div>
                       
-                      <div className="mt-4 p-3 bg-white dark:bg-gray-800 rounded-lg shadow-sm">
-                        <div className="flex justify-between items-center mb-1">
-                          <p className="text-sm font-medium">Cost Per 1000 Impressions (CPM)</p>
-                          <p className="font-bold text-dopanet-600 dark:text-dopanet-400">
-                            ₹{calculatedValues.cpm.toFixed(2)}
-                          </p>
-                        </div>
-                        <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1.5">
-                          <div 
-                            className="bg-gradient-to-r from-dopanet-500 to-teal-500 h-1.5 rounded-full" 
-                            style={{ width: `${Math.min(100, (calculatedValues.cpm / 200) * 100)}%` }}
-                          ></div>
-                        </div>
-                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                          {calculatedValues.cpm < 100 
-                            ? "Excellent value for your budget" 
-                            : calculatedValues.cpm < 150 
-                            ? "Good balance of targeting and value" 
-                            : "Premium targeting increases CPM"}
-                        </p>
-                      </div>
+                       <div className="mt-4 grid grid-cols-2 gap-4">
+                         <div className="p-3 bg-white dark:bg-gray-800 rounded-lg shadow-sm">
+                           <div className="flex justify-between items-center mb-1">
+                             <p className="text-sm font-medium">Budget Points</p>
+                             <p className="font-bold text-blue-600 dark:text-blue-400">
+                               {calculatedValues.budgetPoints.toLocaleString()}
+                             </p>
+                           </div>
+                           <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                             System points for ad delivery (1₹ = 100 points)
+                           </p>
+                         </div>
+                         
+                         <div className="p-3 bg-white dark:bg-gray-800 rounded-lg shadow-sm">
+                           <div className="flex justify-between items-center mb-1">
+                             <p className="text-sm font-medium">Points Per Second (PPS)</p>
+                             <p className="font-bold text-purple-600 dark:text-purple-400">
+                               {calculatedValues.pps.toFixed(4)}
+                             </p>
+                           </div>
+                           <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                             Point burn rate (inversely proportional to CPM)
+                           </p>
+                         </div>
+                       </div>
+                       
+                       <div className="mt-4 p-3 bg-white dark:bg-gray-800 rounded-lg shadow-sm">
+                         <div className="flex justify-between items-center mb-1">
+                           <p className="text-sm font-medium">Cost Per 1000 Impressions (CPM)</p>
+                           <p className="font-bold text-dopanet-600 dark:text-dopanet-400">
+                             ₹{calculatedValues.cpm.toFixed(2)}
+                           </p>
+                         </div>
+                         <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1.5">
+                           <div 
+                             className="bg-gradient-to-r from-dopanet-500 to-teal-500 h-1.5 rounded-full" 
+                             style={{ width: `${Math.min(100, (calculatedValues.cpm / 200) * 100)}%` }}
+                           ></div>
+                         </div>
+                         <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                           {calculatedValues.cpm < 100 
+                             ? "Excellent value for your budget" 
+                             : calculatedValues.cpm < 150 
+                             ? "Good balance of targeting and value" 
+                             : "Premium targeting increases CPM"}
+                         </p>
+                       </div>
                       
                       <div className="flex justify-between mt-6 gap-3">
                         <Button 
@@ -1381,23 +1424,33 @@ const BudgetCalculator: React.FC<BudgetCalculatorProps> = ({ isOpen, setIsOpen }
                         />
                       </div>
                       
-                      <div className="border-t border-gray-200 dark:border-gray-700 pt-4 space-y-2">
-                        <div className="flex justify-between text-sm mb-1">
-                          <span>CPM:</span>
-                          <span className="font-semibold">₹{calculatedValues.cpm}</span>
- </div>
-                        
-                        <div className="flex justify-between text-sm mb-1">
-                          <span>Total Impressions:</span>
-                          <span className="font-semibold">{calculatedValues.totalImpressions.toLocaleString()}</span>
- </div>
+                       <div className="border-t border-gray-200 dark:border-gray-700 pt-4 space-y-2">
+                         <div className="flex justify-between text-sm mb-1">
+                           <span>Budget Points:</span>
+                           <span className="font-semibold text-blue-600 dark:text-blue-400">{calculatedValues.budgetPoints.toLocaleString()}</span>
+                         </div>
+                         
+                         <div className="flex justify-between text-sm mb-1">
+                           <span>PPS:</span>
+                           <span className="font-semibold text-purple-600 dark:text-purple-400">{calculatedValues.pps.toFixed(4)}</span>
+                         </div>
+                         
+                         <div className="flex justify-between text-sm mb-1">
+                           <span>CPM:</span>
+                           <span className="font-semibold">₹{calculatedValues.cpm}</span>
+                         </div>
+                         
+                         <div className="flex justify-between text-sm mb-1">
+                           <span>Total Impressions:</span>
+                           <span className="font-semibold">{calculatedValues.totalImpressions.toLocaleString()}</span>
+                         </div>
                         
                         <div className="flex flex-col">
                           <div className="flex justify-between text-sm">
                             <span>Total Reach:</span>
                             <span className="font-semibold">{calculatedValues.totalReach.toLocaleString()}</span>
- </div>
-
+                          </div>
+                          
                           {selectedPlan && !isCustomPlan && selectedPlan.tier !== "basic" && (
                             <div className="flex justify-between text-xs text-gray-500 pl-4">
                               <span>Base Reach:</span>
@@ -1405,7 +1458,7 @@ const BudgetCalculator: React.FC<BudgetCalculatorProps> = ({ isOpen, setIsOpen }
                             </div>
                           )}
                           
- {selectedPlan && !isCustomPlan && selectedPlan.tier !== "basic" && (
+                          {selectedPlan && !isCustomPlan && selectedPlan.tier !== "basic" && (
                             <div className="flex justify-between text-xs text-green-500 dark:text-green-400 pl-4 font-medium">
                               <span>Bonus Reach:</span>
                               <span>+{calculatedValues.bonusReach.toLocaleString()}</span>
