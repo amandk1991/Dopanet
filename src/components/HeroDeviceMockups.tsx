@@ -3,6 +3,7 @@ import React from "react";
 
 const HeroDeviceMockups = () => {
   return (
+    
     <div className="relative w-full max-w-3xl mx-auto h-64 md:h-96 overflow-hidden">
       {/* Laptop Mockup */}
       <div className="absolute right-0 top-4 md:right-16 md:top-0 transform -rotate-6 shadow-xl rounded-lg w-64 md:w-80 z-20">
